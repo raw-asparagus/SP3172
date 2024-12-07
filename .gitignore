@@ -1,0 +1,27 @@
+# Ignore Python bytecodes
+__pycache__/
+*.py[cod]
+
+# Ignore IPython Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore Jupyter configuration files
+.jupyter/
+.ipython/
+
+# Ignore virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# Ignore all log, csv, dat, p, and npy files which might be output
+*.log
+*.csv
+*.dat
+*.p
+*.npy
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
