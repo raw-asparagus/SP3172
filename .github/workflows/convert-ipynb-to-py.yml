@@ -30,7 +30,10 @@ jobs:
       - name: Convert notebooks to Python
         run: |
           for notebook in $(git diff --name-only HEAD^ HEAD | grep ".ipynb$"); do
-            jupyter nbconvert --to script "$notebook" --output-dir $(dirname "$notebook")
+            py_file="$(dirname "$notebook")/$(basename "$notebook" .ipynb).py"
+            if [ ! -f "$py_file" ]; then
+              jupyter nbconvert --to script "$notebook" --output-dir $(dirname "$notebook")
+            fi
           done
 
       # Commit the converted Python scripts
@@ -38,7 +41,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add ./**/*.py
+          git add ./**/converted_scripts/*.py
           git commit -m "Exported Python scripts from changed notebooks"
           git push
         env:
