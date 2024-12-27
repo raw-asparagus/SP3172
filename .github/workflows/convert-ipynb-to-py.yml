@@ -29,12 +29,17 @@ jobs:
       # Find and convert changed notebooks
       - name: Convert notebooks to Python
         run: |
-          for notebook in $(git diff --name-only HEAD^ HEAD | grep ".ipynb$"); do
-            py_file="$(dirname "$notebook")/$(basename "$notebook" .ipynb).py"
-            if [ ! -f "$py_file" ]; then
-              jupyter nbconvert --to script "$notebook" --output-dir $(dirname "$notebook")
-            fi
+          if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            base_commit=HEAD^
+          else
+            base_commit=HEAD
+          fi
+          for notebook in $(git diff --name-only $base_commit HEAD | grep ".ipynb$"); do
+            subdir="$(dirname "$notebook")/converted_scripts"
+            mkdir -p "$subdir"
+            jupyter nbconvert --to script "$notebook" --output-dir "$subdir"
           done
+
 
       # Commit the converted Python scripts
       - name: Commit changes
