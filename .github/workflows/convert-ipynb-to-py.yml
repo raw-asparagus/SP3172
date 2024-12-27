@@ -1,0 +1,45 @@
+name: Export IPython Notebooks to Python Scripts
+
+on:
+  push:
+    paths:
+      - '**/*.ipynb'
+
+jobs:
+  convert-notebooks:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      # Install Jupyter nbconvert
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install nbconvert
+
+      # Find and convert changed notebooks
+      - name: Convert notebooks to Python
+        run: |
+          for notebook in $(git diff --name-only HEAD^ HEAD | grep ".ipynb$"); do
+            jupyter nbconvert --to script "$notebook" --output-dir $(dirname "$notebook")
+          done
+
+      # Commit the converted Python scripts
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add ./**/*.py
+          git commit -m "Exported Python scripts from changed notebooks"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
