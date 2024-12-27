@@ -1,2 +1,2 @@
-# sp3172
+# SP3172
 Working repository for SP3172 Integrated Science Project
