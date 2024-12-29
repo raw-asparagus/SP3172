@@ -49,11 +49,15 @@ class Coffey(KnapsackProblem):
                     for i in range(N)
                     for j in range(i + 1, N)
                 )
-                print("H_0 set as mixed!\n")
+                print(f"H_0 set as {self.get_H_0_state()}!\n")
             case "transverse":
                 self.H_0_state = "transverse"
                 H_0 -= sum(Pauli.tensor_sigmax(i, N) for i in range(N))
-                print("H_0 set as transverse!\n")
+                print(f"H_0 set as {self.get_H_0_state()}!\n")
+            case "original":
+                self.H_0_state = "original"
+                H_0 -= sum(Pauli.tensor_sigmaz(i, N) for i in range(N))
+                print(f"H_0 set as {self.get_H_0_state()}!\n")
             case _:
                 print("Choice of H_0 failed! Please try again!\n")
 
@@ -106,7 +110,7 @@ class Coffey(KnapsackProblem):
     ) -> int:
         if modifier_bit is not None:
             modifier = int(modifier_bit) * (
-                self.get_capacity() - np.power(2, len(ancillary_bits) - 1)
+                self.get_capacity() + 1 - np.power(2, self.get_M())
             )
         else:
             modifier = 0
@@ -144,7 +148,7 @@ class Coffey(KnapsackProblem):
         )
         qubit_basis = Basis(self.get_total_qubits())
         probs_lst = np.power(
-            np.abs(np.dot(qubit_basis.basis_matrix.T.conj(), state_matrix)), 2
+            np.abs(np.dot(qubit_basis.get_basis_matrix().T.conj(), state_matrix)), 2
         ).T.tolist()
         print("Probabilities computed!\n")
 
@@ -268,7 +272,7 @@ class MakeGraphCoffey(MakeGraph):
                 )
 
         for idx, val in enumerate(table_data):
-            table_data[idx][1] = f"{val[1] / subset_prob:.4f}"
+            table_data[idx][1] = f"{val[1] / subset_prob if subset_prob != 0 else 0:.4f}"
 
         # Create figure and axes with dynamic size
         num_rows = len(table_data)
