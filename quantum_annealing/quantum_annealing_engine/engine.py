@@ -20,7 +20,7 @@ class Pauli:
 
 class Observable:
     @staticmethod
-    def get_ground_eigenstate(op: Qobj):
+    def get_ground_eigenstate(op: Qobj) -> Qobj:
         _, ground_eigenstate = op.groundstate()
         return ground_eigenstate
 

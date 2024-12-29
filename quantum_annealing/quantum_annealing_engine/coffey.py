@@ -9,6 +9,10 @@ class Coffey(KnapsackProblem):
         super().__init__(profits, weights, capacity)
         self.set_params()
         self.set_alpha()
+        self.set_H_0_state("transverse")
+        print(
+            "Note that by default Initial Hamiltonian will use transverse Hamiltonian!\n"
+        )
 
     #   Setters
     #   Idea: rework to add 'old' flag to swap between old and new
@@ -26,6 +30,18 @@ class Coffey(KnapsackProblem):
             self.alpha = np.max(self.get_profits()) + 1
         else:
             self.alpha = alpha
+            print(f"alpha parameter set to: {alpha}!\n")
+
+    def set_H_0_state(self, H_0_state: str) -> None:
+        match H_0_state:
+            case "mixed":
+                self.H_0_state = "mixed"
+                print("Initial Hamiltonian set as mixed!\n")
+            case "transverse":
+                self.H_0_state = "transverse"
+                print("Initial Hamiltonian set as transverse!\n")
+            case _:
+                print("Set choice of initial Hamiltonian failed! Please try again!\n")
 
     #   Core Getters
     def get_M(self) -> int:
@@ -39,6 +55,9 @@ class Coffey(KnapsackProblem):
 
     def get_alpha(self) -> float:
         return self.alpha
+
+    def get_H_0_state(self) -> str:
+        return self.H_0_state
 
     #   Getters
     #   Idea: rework to add 'old' flag to swap between old and new
@@ -58,9 +77,23 @@ class Coffey(KnapsackProblem):
 
     #   Basic Functionalities
     def H_0(self) -> Qobj:
-        #   Idea: rework to add 'H_0' flag to swap between transverse and the other one
         N = self.get_total_qubits()
-        return -sum(Pauli.tensor_sigmax(i, N) for i in range(N))
+
+        #   Select between mixed and transverse Hamiltonian
+        match self.H_0_state:
+            case "transverse":
+                H_0 = -sum(Pauli.tensor_sigmax(i, N) for i in range(N))
+            case "mixed":
+                H_0 = 0
+                for i in range(N):
+                    for j in range(i + 1, N):
+                        # Pauli-X on the ith and jth qubit, identity on others
+                        operators = [
+                            qeye(2) if k != i and k != j else sigmax() for k in range(N)
+                        ]
+                        H_0 -= tensor(operators)
+
+        return H_0
 
     #   Idea: rework to add 'old' flag to swap between old and new
     def H_P(self) -> Qobj:
@@ -97,21 +130,27 @@ class Coffey(KnapsackProblem):
     def anneal(self, num_steps: int) -> Result:
         ts = np.linspace(0, 1, num_steps)
         psi0 = Observable.get_ground_eigenstate(self.H_0())
-        return mesolve(lambda s: self.H(s), psi0, ts, e_ops=[])
+        res = mesolve(self.H, psi0, ts, e_ops=[])
+        print("Quantum annealing complete!\n")
+        return res
 
     def compute_probs(self, res: Result) -> list:
         """Using result from anneal"""
         state_matrix = np.hstack([psi.full() for psi in res.states])
         qubit_basis = Basis(self.get_total_qubits())
-        return np.power(
+        probs_lst = np.power(
             np.abs(np.dot(qubit_basis.basis_matrix.T.conj(), state_matrix)), 2
         ).T.tolist()
+        print("Probabilities computed!\n")
+        return probs_lst
 
     def compute_spectrum(self, num_steps: int) -> list:
         """Independent from anneal"""
         ts = np.linspace(0, 1, num_steps)
         hs = [self.H(t) for t in ts]
-        return [h.eigenenergies() for h in hs]
+        spectrum_lst = [h.eigenenergies() for h in hs]
+        print("Spectrum computed!\n")
+        return spectrum_lst
 
 
 class MakeGraphCoffey(MakeGraph):
@@ -252,11 +291,16 @@ class MakeGraphCoffey(MakeGraph):
         table.set_fontsize(10)
         table.scale(1.2, 1.2)
 
-        for (i, _), cell in table.get_celld().items():
+        for (i, ), cell in table.get_celld().items():
             if i == 0:
                 cell.set_fontsize(12)
                 cell.set_facecolor("#40466e")
                 cell.set_text_props(color="w")
+            elif i > 0:
+                item_weight = float(table_data[i - 1][2])
+                if item_weight > coffey.get_capacity():
+                    for k in range(len(table_data[i - 1])):
+                        table[(i, k)].set_facecolor("#ffcccc")
 
         plt.show()
 
