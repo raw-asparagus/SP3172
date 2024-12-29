@@ -1,5 +1,5 @@
 import numpy as np
-from qutip import Qobj, Result, basis, qeye, sigmax, sigmaz, tensor
+from qutip import Qobj, basis, qeye, sigmax, sigmaz, tensor
 
 
 class Pauli:

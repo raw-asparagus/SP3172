@@ -292,7 +292,7 @@ class MakeGraphCoffey(MakeGraph):
         table.set_fontsize(10)
         table.scale(1.2, 1.2)
 
-        for (i, ), cell in table.get_celld().items():
+        for (i, _), cell in table.get_celld().items():
             if i == 0:
                 cell.set_fontsize(12)
                 cell.set_facecolor("#40466e")
