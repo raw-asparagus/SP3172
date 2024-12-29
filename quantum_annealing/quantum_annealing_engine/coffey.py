@@ -11,27 +11,28 @@ class Coffey(KnapsackProblem):
         self.set_alpha()
         self.set_H_0("transverse")
         print(
-            "Note that by default Initial Hamiltonian will use transverse Hamiltonian!\n"
+            "Note that by default, H_0 will use take the form of a transverse Hamiltonian!\n"
         )
         self.set_H_P()
 
     #   Setters
     #   Idea: rework to add 'old' flag to swap between old and new
     def set_params(self) -> None:
-        #   Based on eqn 3
         self.M = int(np.floor(np.log2(self.get_capacity())))
-
-        #   Based on eqn 3
         self.total_qubits = self.get_num_items() + self.get_M() + 1
-
         self.num_states = np.power(2, self.total_qubits)
 
     def set_alpha(self, alpha: float = 0.0) -> None:
-        if alpha == 0.0:
+        if alpha <= np.max(self.get_profits()):
+            if alpha != 0.0:
+                print("Invalid alpha parameter!")
             self.alpha = np.max(self.get_profits()) + 1
+            print(f"alpha parameter has been set to default as: {self.alpha}!\n")
         else:
             self.alpha = alpha
-            print(f"alpha parameter set to: {alpha}!\n")
+            print(f"alpha parameter has been set to: {alpha}!\n")
+
+        self.set_H_P()
 
     def set_H_0(self, H_0_state: str) -> None:
         N = self.get_total_qubits()
@@ -41,20 +42,20 @@ class Coffey(KnapsackProblem):
         match H_0_state:
             case "mixed":
                 self.H_0_state = "mixed"
-                for i in range(N):
-                    for j in range(i + 1, N):
-                        # Pauli-X on the ith and jth qubit, identity on others
-                        operators = [
-                            qeye(2) if k != i and k != j else sigmax() for k in range(N)
-                        ]
-                        H_0 -= tensor(operators)
-                print("Initial Hamiltonian set as mixed!\n")
+                H_0 += sum(
+                    -tensor(
+                        [qeye(2) if k != i and k != j else sigmax() for k in range(N)]
+                    )
+                    for i in range(N)
+                    for j in range(i + 1, N)
+                )
+                print("H_0 set as mixed!\n")
             case "transverse":
                 self.H_0_state = "transverse"
                 H_0 -= sum(Pauli.tensor_sigmax(i, N) for i in range(N))
-                print("Initial Hamiltonian set as transverse!\n")
+                print("H_0 set as transverse!\n")
             case _:
-                print("Set choice of initial Hamiltonian failed! Please try again!\n")
+                print("Choice of H_0 failed! Please try again!\n")
 
         self.H_0 = H_0
 
@@ -62,22 +63,18 @@ class Coffey(KnapsackProblem):
     def set_H_P(self) -> None:
         N = self.get_total_qubits()
 
-        #   Based on eqn 3
         i_upper = j_lower = self.get_num_items()
         j_upper = self.get_num_items() + self.get_M()
         H_A1 = sum(
             np.power(2, j - j_lower) * Pauli.tensor_sigmaz(j, N)
             for j in range(j_lower, j_upper)
         )  #   starting from the 1st ancillary qubit
-
         H_A2 = (
             self.get_capacity() + 1 - np.power(2, self.get_M())
         ) * Pauli.tensor_sigmaz(j_upper, N)
-
         H_A3 = -sum(
             self.get_weight(i) * Pauli.tensor_sigmaz(i, N) for i in range(i_upper)
         )
-
         H_A = (H_A1 + H_A2 + H_A3) ** 2
 
         H_B = -sum(
@@ -116,11 +113,12 @@ class Coffey(KnapsackProblem):
         ancillary_weight = sum(
             np.power(2, idx) for idx, val in enumerate(ancillary_bits) if int(val) == 1
         )
+
         return modifier + ancillary_weight
-    
+
     def get_H_0(self) -> Qobj:
         return self.H_0
-    
+
     def get_H_P(self) -> Qobj:
         return self.H_P
 
@@ -133,16 +131,23 @@ class Coffey(KnapsackProblem):
         psi0 = Observable.get_ground_eigenstate(self.get_H_0())
         res = mesolve(self.get_H, psi0, ts, e_ops=[])
         print("Quantum annealing complete!\n")
+
         return res
 
-    def compute_probs(self, res: Result) -> list:
+    def compute_probs(self, res: Result, num_steps) -> list:
         """Using result from anneal"""
-        state_matrix = np.hstack([psi.full() for psi in res.states])
+        interpolate = np.round(np.linspace(0, len(res.states) - 1, num_steps)).astype(
+            int
+        )
+        state_matrix = np.hstack(
+            [psi.full() for psi in list(np.array(res.states)[interpolate])]
+        )
         qubit_basis = Basis(self.get_total_qubits())
         probs_lst = np.power(
             np.abs(np.dot(qubit_basis.basis_matrix.T.conj(), state_matrix)), 2
         ).T.tolist()
         print("Probabilities computed!\n")
+
         return probs_lst
 
     def compute_spectrum(self, num_steps: int) -> list:
@@ -151,6 +156,7 @@ class Coffey(KnapsackProblem):
         hs = [self.get_H(t) for t in ts]
         spectrum_lst = [h.eigenenergies() for h in hs]
         print("Spectrum computed!\n")
+
         return spectrum_lst
 
 
@@ -340,11 +346,7 @@ class MakeGraphCoffey(MakeGraph):
         ax3 = fig.add_subplot(gs[1, 0])
 
         ax3.semilogy(
-            probs_ts,
-            [1 - sum(prob) for prob in self.get_probs()],
-            ls="",
-            marker=".",
-            ms=1,
+            probs_ts, [1 - sum(prob) for prob in self.get_probs()], ls="", marker="."
         )
 
         ax3.set(
