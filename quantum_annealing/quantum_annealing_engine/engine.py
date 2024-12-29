@@ -2,7 +2,7 @@ import numpy as np
 from qutip import Qobj, basis, qeye, sigmax, sigmaz, tensor
 
 
-class Pauli:
+class Gates:
     @staticmethod
     def tensor_sigmax(i: int, n: int) -> Qobj:
         """Tensor product such that i-th element is sigma_x and rest are identity"""
@@ -12,6 +12,13 @@ class Pauli:
 
     @staticmethod
     def tensor_sigmaz(i: int, n: int) -> Qobj:
+        """Tensor product such that i-th element is sigma_z and rest are identity"""
+        ops = [qeye(2) for _ in range(n)]
+        ops[i] = sigmaz()
+        return tensor(ops)
+
+    @staticmethod
+    def tensor_bin(i: int, n: int) -> Qobj:
         """Tensor product such that i-th element is (I - sigma_z) / 2 and rest are identity"""
         ops = [qeye(2) for _ in range(n)]
         ops[i] = (qeye(2) - sigmaz()) / 2

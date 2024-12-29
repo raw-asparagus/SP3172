@@ -8,12 +8,14 @@ class Coffey(KnapsackProblem):
     def __init__(self, profits: np.ndarray, weights: np.ndarray, capacity: int) -> None:
         super().__init__(profits, weights, capacity)
         self.set_params()
-        self.set_alpha()
-        self.set_H_0("transverse")
+
+        self.H_0_state = "transverse"
         print(
             "Note that by default, H_0 will use take the form of a transverse Hamiltonian!\n"
         )
-        self.set_H_P()
+
+        self.set_gamma()
+        self.set_alpha()
 
     #   Setters
     #   Idea: rework to add 'old' flag to swap between old and new
@@ -22,26 +24,49 @@ class Coffey(KnapsackProblem):
         self.total_qubits = self.get_num_items() + self.get_M() + 1
         self.num_states = np.power(2, self.total_qubits)
 
+    def set_gamma(self, gamma: float = 1.0) -> None:
+        self.gamma = gamma
+        print(f"gamma parameter has been set to: {self.get_gamma()}\n")
+
+        self.set_H_0()
+
     def set_alpha(self, alpha: float = 0.0) -> None:
         if alpha <= np.max(self.get_profits()):
             if alpha != 0.0:
                 print("Invalid alpha parameter!")
             self.alpha = np.max(self.get_profits()) + 1
-            print(f"alpha parameter has been set to default as: {self.alpha}!\n")
+            print(f"alpha parameter has been set to default as: {self.get_alpha()}\n")
         else:
             self.alpha = alpha
-            print(f"alpha parameter has been set to: {alpha}!\n")
+            print(f"alpha parameter has been set to: {self.get_alpha()}\n")
 
         self.set_H_P()
 
-    def set_H_0(self, H_0_state: str) -> None:
-        N = self.get_total_qubits()
-
-        #   Select between mixed and transverse Hamiltonian
-        H_0 = 0
+    def set_H_0_state(self, H_0_state: str) -> None:
         match H_0_state:
             case "mixed":
                 self.H_0_state = "mixed"
+                print(f"H_0 set as {self.get_H_0_state()}!\n")
+            case "transverse":
+                self.H_0_state = "transverse"
+                print(f"H_0 set as {self.get_H_0_state()}!\n")
+            case "original":
+                self.H_0_state = "original"
+                print(f"H_0 set as {self.get_H_0_state()}!\n")
+            case _:
+                self.H_0_state = "transverse"
+                print(
+                    "Choice of H_0 failed! H_0 has been set to default as transverse!\nPlease try again!"
+                )
+
+        self.set_H_0()
+
+    def set_H_0(self) -> None:
+        N = self.get_total_qubits()
+
+        H_0 = 0
+        match self.get_H_0_state():
+            case "mixed":
                 H_0 += sum(
                     -tensor(
                         [qeye(2) if k != i and k != j else sigmax() for k in range(N)]
@@ -49,19 +74,14 @@ class Coffey(KnapsackProblem):
                     for i in range(N)
                     for j in range(i + 1, N)
                 )
-                print(f"H_0 set as {self.get_H_0_state()}!\n")
             case "transverse":
-                self.H_0_state = "transverse"
-                H_0 -= sum(Pauli.tensor_sigmax(i, N) for i in range(N))
-                print(f"H_0 set as {self.get_H_0_state()}!\n")
+                H_0 -= sum(Gates.tensor_sigmax(i, N) for i in range(N))
             case "original":
-                self.H_0_state = "original"
-                H_0 -= sum(Pauli.tensor_sigmaz(i, N) for i in range(N))
-                print(f"H_0 set as {self.get_H_0_state()}!\n")
+                H_0 -= sum(Gates.tensor_bin(i, N) for i in range(N))
             case _:
-                print("Choice of H_0 failed! Please try again!\n")
+                pass
 
-        self.H_0 = H_0
+        self.H_0 = self.get_gamma() * H_0
 
     #   Idea: rework to add 'old' flag to swap between old and new
     def set_H_P(self) -> None:
@@ -70,20 +90,16 @@ class Coffey(KnapsackProblem):
         i_upper = j_lower = self.get_num_items()
         j_upper = self.get_num_items() + self.get_M()
         H_A1 = sum(
-            np.power(2, j - j_lower) * Pauli.tensor_sigmaz(j, N)
+            np.power(2, j - j_lower) * Gates.tensor_bin(j, N)
             for j in range(j_lower, j_upper)
         )  #   starting from the 1st ancillary qubit
-        H_A2 = (
-            self.get_capacity() + 1 - np.power(2, self.get_M())
-        ) * Pauli.tensor_sigmaz(j_upper, N)
-        H_A3 = -sum(
-            self.get_weight(i) * Pauli.tensor_sigmaz(i, N) for i in range(i_upper)
+        H_A2 = (self.get_capacity() + 1 - np.power(2, self.get_M())) * Gates.tensor_bin(
+            j_upper, N
         )
+        H_A3 = -sum(self.get_weight(i) * Gates.tensor_bin(i, N) for i in range(i_upper))
         H_A = (H_A1 + H_A2 + H_A3) ** 2
 
-        H_B = -sum(
-            self.get_profit(i) * Pauli.tensor_sigmaz(i, N) for i in range(i_upper)
-        )
+        H_B = -sum(self.get_profit(i) * Gates.tensor_bin(i, N) for i in range(i_upper))
 
         self.H_P = self.get_alpha() * H_A + H_B
 
@@ -96,6 +112,9 @@ class Coffey(KnapsackProblem):
 
     def get_num_states(self) -> int:
         return self.num_states
+
+    def get_gamma(self) -> float:
+        return self.gamma
 
     def get_alpha(self) -> float:
         return self.alpha
@@ -272,7 +291,9 @@ class MakeGraphCoffey(MakeGraph):
                 )
 
         for idx, val in enumerate(table_data):
-            table_data[idx][1] = f"{val[1] / subset_prob if subset_prob != 0 else 0:.4f}"
+            table_data[idx][
+                1
+            ] = f"{val[1] / subset_prob if subset_prob != 0 else 0:.4f}"
 
         # Create figure and axes with dynamic size
         num_rows = len(table_data)
