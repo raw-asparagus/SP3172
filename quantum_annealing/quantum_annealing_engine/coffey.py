@@ -168,7 +168,20 @@ class Coffey(KnapsackProblem):
         ts = self.gen_ts(num_steps)
         psi0 = Observable.get_ground_eigenstate(self.get_H_0())
         res = mesolve(self.get_H, psi0, ts, e_ops=[])
-        print("Quantum annealing complete!\n")
+
+        return res
+
+    def manual_anneal(self, num_steps: int) -> Result:
+        """Deprecated, written to test manual annealing"""
+        ts = self.gen_ts(num_steps)
+        states = [Observable.get_ground_eigenstate(self.get_H_0())]
+        for i, t in enumerate(ts[1:]):
+            res = mesolve(
+                lambda s: self.get_H(s + ts[i]), states[-1], [0, t - ts[i]], e_ops=[]
+            )
+            states.append(res.states[-1])
+        res.times = ts
+        res.states = states
 
         return res
 
@@ -184,14 +197,12 @@ class Coffey(KnapsackProblem):
         probs_lst = np.power(
             np.abs(np.dot(qubit_basis.get_basis_matrix().T.conj(), state_matrix)), 2
         ).T.tolist()
-        print("Simulated probabilities computed!\n")
 
         return probs_lst
 
     def simulate_spectrum(self, num_steps: int) -> list:
         """Independent from anneal"""
         spectrum_lst = [self.get_H(t).eigenenergies() for t in self.gen_ts(num_steps)]
-        print("Spectrum computed!\n")
 
         return spectrum_lst
 
