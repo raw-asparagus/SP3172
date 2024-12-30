@@ -1,5 +1,5 @@
 from .engine import *
-from qutip import Result, mesolve
+from qutip import Result, expect, mesolve
 from matplotlib import gridspec
 import matplotlib.pyplot as plt
 
@@ -14,11 +14,15 @@ class Coffey(KnapsackProblem):
             "Note that by default, H_0 will use take the form of a transverse Hamiltonian!\n"
         )
 
+        self.H_0 = None
         self.set_gamma()
+        self.H_P = None
         self.set_alpha()
 
-    #   Setters
-    #   Idea: rework to add 'old' flag to swap between old and new
+    #   Idea: add eqn 2a Hamiltonian for H_A
+    #   Rework to include old flag to toggle between eqn 2a, 3
+
+    #   Core Setters
     def set_params(self) -> None:
         self.M = int(np.floor(np.log2(self.get_capacity())))
         self.total_qubits = self.get_num_items() + self.get_M() + 1
@@ -26,7 +30,10 @@ class Coffey(KnapsackProblem):
 
     def set_gamma(self, gamma: float = 1.0) -> None:
         self.gamma = gamma
-        print(f"gamma parameter has been set to: {self.get_gamma()}\n")
+        print(f"gamma parameter has been set to: {self.get_gamma()}")
+        if self.gamma == 0.0:
+            print("Note that setting gamma to 0.0 nullifies H_0!")
+        print("")
 
         self.set_H_0()
 
@@ -47,12 +54,15 @@ class Coffey(KnapsackProblem):
             case "mixed":
                 self.H_0_state = "mixed"
                 print(f"H_0 set as {self.get_H_0_state()}!\n")
+
             case "transverse":
                 self.H_0_state = "transverse"
                 print(f"H_0 set as {self.get_H_0_state()}!\n")
+
             case "original":
                 self.H_0_state = "original"
                 print(f"H_0 set as {self.get_H_0_state()}!\n")
+
             case _:
                 self.H_0_state = "transverse"
                 print(
@@ -61,29 +71,30 @@ class Coffey(KnapsackProblem):
 
         self.set_H_0()
 
+    #   Setters
     def set_H_0(self) -> None:
         N = self.get_total_qubits()
 
         H_0 = 0
         match self.get_H_0_state():
             case "mixed":
-                H_0 += sum(
-                    -tensor(
-                        [qeye(2) if k != i and k != j else sigmax() for k in range(N)]
-                    )
+                H_0 -= sum(
+                    Gates.tensor_sigmax(i, N) * Gates.tensor_sigmax(j, N)
                     for i in range(N)
                     for j in range(i + 1, N)
                 )
+
             case "transverse":
                 H_0 -= sum(Gates.tensor_sigmax(i, N) for i in range(N))
+
             case "original":
                 H_0 -= sum(Gates.tensor_bin(i, N) for i in range(N))
+
             case _:
                 pass
 
         self.H_0 = self.get_gamma() * H_0
 
-    #   Idea: rework to add 'old' flag to swap between old and new
     def set_H_P(self) -> None:
         N = self.get_total_qubits()
 
@@ -123,9 +134,8 @@ class Coffey(KnapsackProblem):
         return self.H_0_state
 
     #   Getters
-    #   Idea: rework to add 'old' flag to swap between old and new
     def calculate_total_ancillary_weight(
-        self, ancillary_bits, modifier_bit=None
+        self, ancillary_bits: str, modifier_bit=None
     ) -> int:
         if modifier_bit is not None:
             modifier = int(modifier_bit) * (
@@ -134,7 +144,7 @@ class Coffey(KnapsackProblem):
         else:
             modifier = 0
         ancillary_weight = sum(
-            np.power(2, idx) for idx, val in enumerate(ancillary_bits) if int(val) == 1
+            np.power(2, i) for i, val in enumerate(ancillary_bits) if int(val) == 1
         )
 
         return modifier + ancillary_weight
@@ -148,9 +158,14 @@ class Coffey(KnapsackProblem):
     def get_H(self, s: float) -> Qobj:
         return (1 - s) * self.get_H_0() + s * self.get_H_P()
 
+    #   Static functionalities
+    @staticmethod
+    def gen_ts(num_steps: int) -> np.ndarray:
+        return np.linspace(0, 1, num_steps)
+
     #   Functionalities
     def anneal(self, num_steps: int) -> Result:
-        ts = np.linspace(0, 1, num_steps)
+        ts = self.gen_ts(num_steps)
         psi0 = Observable.get_ground_eigenstate(self.get_H_0())
         res = mesolve(self.get_H, psi0, ts, e_ops=[])
         print("Quantum annealing complete!\n")
@@ -169,36 +184,44 @@ class Coffey(KnapsackProblem):
         probs_lst = np.power(
             np.abs(np.dot(qubit_basis.get_basis_matrix().T.conj(), state_matrix)), 2
         ).T.tolist()
-        print("Probabilities computed!\n")
+        print("Simulated probabilities computed!\n")
 
         return probs_lst
 
-    def compute_spectrum(self, num_steps: int) -> list:
+    def simulate_spectrum(self, num_steps: int) -> list:
         """Independent from anneal"""
-        ts = np.linspace(0, 1, num_steps)
-        hs = [self.get_H(t) for t in ts]
-        spectrum_lst = [h.eigenenergies() for h in hs]
+        spectrum_lst = [self.get_H(t).eigenenergies() for t in self.gen_ts(num_steps)]
         print("Spectrum computed!\n")
 
         return spectrum_lst
+
+    def compute_spectrum(self, res: Result, num_steps: int) -> list:
+        """Using result from anneal"""
+        interpolate = np.round(np.linspace(0, len(res.states) - 1, num_steps)).astype(
+            int
+        )
+        times = np.array(res.times)[interpolate]
+        states = np.array(res.states)[interpolate]
+
+        energies = [expect(self.get_H(t), psi) for t, psi in zip(times, states)]
+
+        return energies
 
 
 class MakeGraphCoffey(MakeGraph):
     def __init__(self) -> None:
         super().__init__()
 
-    #   Functionalities
-    def display_probs(self, coffey: Coffey) -> None:
+    #   Static functionalities
+    @staticmethod
+    def tabulate_probs(coffey: Coffey, probs: list) -> list:
         final_probs = [
             (format(idx, f"0{coffey.get_total_qubits()}b"), prob)
-            for idx, prob in enumerate(self.get_probs()[-1])
+            for idx, prob in enumerate(probs[-1])
         ]
 
-        #   Get the top 5 most probable basis in the final state
-        table_data = []
-        for state_label, prob in sorted(final_probs, key=lambda x: x[1], reverse=True)[
-            :5
-        ]:
+        data = []
+        for state_label, prob in sorted(final_probs, key=lambda x: x[1], reverse=True):
             item_bits = state_label[: coffey.get_num_items()]
             ancillary_bits = state_label[
                 coffey.get_num_items() : coffey.get_num_items() + coffey.get_M()
@@ -211,15 +234,24 @@ class MakeGraphCoffey(MakeGraph):
                 ancillary_bits, modifier_bit
             )
 
-            table_data.append(
+            data.append(
                 [
                     f"| {item_bits} {ancillary_bits + modifier_bit} >",
-                    f"{prob:.4f}",
+                    prob,
                     item_weight,
                     ancillary_weight,
                     total_profit,
                 ]
             )
+
+        return data
+
+    #   Functionalities
+    def display_probs(self, coffey: Coffey) -> None:
+        table_data = self.tabulate_probs(coffey, self.get_probs())[:5]
+
+        for idx, val in enumerate(table_data):
+            table_data[idx][1] = f"{val[1]:.4f}"
 
         # Create figure and axes with dynamic size
         num_rows = len(table_data)
@@ -230,7 +262,6 @@ class MakeGraphCoffey(MakeGraph):
         fig_width = col_width * num_columns
         fig_height = row_height * num_rows
         _, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=300)
-        ax.axis("tight")
         ax.axis("off")
         ax.set(title="Top 5 states sorted by probability in descending order")
         table = ax.table(
@@ -258,48 +289,21 @@ class MakeGraphCoffey(MakeGraph):
         plt.show()
 
     def display_filtered_probs(self, coffey: Coffey) -> None:
-        final_probs = [
-            (format(idx, f"0{coffey.get_total_qubits()}b"), prob)
-            for idx, prob in enumerate(self.get_probs()[-1])
-        ]
+        table_data = self.tabulate_probs(coffey, self.get_probs())
 
-        subset_prob = 0
-        table_data = []
-        for state_label, prob in sorted(final_probs, key=lambda x: x[1], reverse=True):
-            item_bits = state_label[: coffey.get_num_items()]
-            ancillary_bits = state_label[
-                coffey.get_num_items() : coffey.get_num_items() + coffey.get_M()
-            ]
-            modifier_bit = state_label[coffey.get_num_items() + coffey.get_M()]
-
-            item_weight = coffey.calculate_total_weight(item_bits)
-            total_profit = coffey.calculate_total_profit(item_bits)
-            ancillary_weight = coffey.calculate_total_ancillary_weight(
-                ancillary_bits, modifier_bit
-            )
-
-            if item_weight == ancillary_weight:
-                subset_prob += prob
-                table_data.append(
-                    [
-                        f"| {item_bits} {ancillary_bits + modifier_bit} >",
-                        prob,
-                        item_weight,
-                        ancillary_weight,
-                        total_profit,
-                    ]
-                )
+        table_data = list(filter(lambda x: x[2] == x[3], table_data))
+        subset_prob = np.sum(np.array(table_data)[:, 1].astype(float))
 
         for idx, val in enumerate(table_data):
             table_data[idx][
                 1
-            ] = f"{val[1] / subset_prob if subset_prob != 0 else 0:.4f}"
+            ] = f"{val[1] / subset_prob if subset_prob != 0 else 0:.4f} ({val[1]:.4f})"
 
         # Create figure and axes with dynamic size
         num_rows = len(table_data)
         num_columns = len(table_data[0])
         row_height = 0.3
-        col_width = max(len(str(x)) for row in table_data for x in row) * 0.2
+        col_width = max(len(str(x)) for row in table_data for x in row) * 0.15
 
         fig_width = col_width * num_columns
         fig_height = row_height * num_rows
@@ -337,15 +341,17 @@ class MakeGraphCoffey(MakeGraph):
         plt.show()
 
     def display_graph(self, coffey: Coffey, num_energies=5) -> None:
-        probs_ts = np.linspace(0, 1, len(self.get_probs()))
-        low_spectrum = np.array([ev[:num_energies] for ev in self.get_spectrum()])
-        spectrum_ts = np.linspace(0, 1, len(self.get_spectrum()))
+        probs_ts = coffey.gen_ts(len(self.get_probs()))
+        actual_spectrum = self.get_computed_spectrum()
+        low_spectrum = np.array(
+            [ev[:num_energies] for ev in self.get_simulated_spectrum()]
+        )
+        spectrum_ts = coffey.gen_ts(len(self.get_simulated_spectrum()))
 
         fig = plt.figure(figsize=(20, 7), dpi=300)
         gs = gridspec.GridSpec(2, 2, height_ratios=[5, 1])
 
         ax1 = fig.add_subplot(gs[0, 0])
-
         for idx in range(coffey.get_num_states()):
             ax1.plot(
                 probs_ts,
@@ -360,7 +366,6 @@ class MakeGraphCoffey(MakeGraph):
                 horizontalalignment="center",
                 verticalalignment="bottom",
             )
-
         ax1.set(
             xlabel="Time units",
             ylabel="Probability",
@@ -369,11 +374,9 @@ class MakeGraphCoffey(MakeGraph):
         ax1.grid(True, alpha=0.25)
 
         ax3 = fig.add_subplot(gs[1, 0])
-
         ax3.semilogy(
             probs_ts, [1 - sum(prob) for prob in self.get_probs()], ls="", marker="."
         )
-
         ax3.set(
             xlabel="Time units",
             ylabel=r"$1 - \sum P$",
@@ -382,10 +385,9 @@ class MakeGraphCoffey(MakeGraph):
         ax3.grid(True, alpha=0.25)
 
         ax2 = fig.add_subplot(gs[:, 1])
-
-        for idx in range(num_energies):
-            ax2.plot(spectrum_ts, low_spectrum[:, idx])
-
+        for idx in range(low_spectrum.shape[1]):
+            ax2.plot(spectrum_ts, low_spectrum[:, idx], c="grey", alpha=0.75)
+        ax2.plot(spectrum_ts, actual_spectrum, c="blue")
         ax2.set(
             xlabel="Time units",
             ylabel="Energy eigenvalues",
@@ -394,5 +396,4 @@ class MakeGraphCoffey(MakeGraph):
         ax2.grid(True, alpha=0.25)
 
         plt.tight_layout()
-
         plt.show()

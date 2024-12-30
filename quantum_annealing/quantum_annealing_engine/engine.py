@@ -43,6 +43,7 @@ class Basis:
 
     def generate_basis_states(self) -> None:
         N = np.power(2, self.get_num_qubits())
+
         basis_states = [
             tensor(
                 [
@@ -52,6 +53,7 @@ class Basis:
             )
             for i in range(N)
         ]
+
         self.basis_states = basis_states
         self.basis_matrix = np.hstack([psi.full() for psi in basis_states])
 
@@ -108,27 +110,34 @@ class KnapsackProblem:
     # Getters
     def calculate_total_weight(self, item_bits: str) -> int:
         """Calculate total weight from item bits."""
-        return sum(self.get_weight(i) for i, bit in enumerate(item_bits) if bit == "1")
+        return sum(w * int(x) for w, x in zip(self.get_weights(), item_bits))
 
     def calculate_total_profit(self, item_bits: str) -> int:
         """Calculate total profit from item bits."""
-        return sum(self.get_profit(i) for i, bit in enumerate(item_bits) if bit == "1")
+        return sum(p * int(x) for p, x in zip(self.get_profits(), item_bits))
 
 
 class MakeGraph:
     def __init__(self) -> None:
-        pass
+        self.probs = None
+        self.spectrum = None
 
     #   Core setters
     def set_probs(self, probs: list) -> None:
         self.probs = probs
 
-    def set_spectrum(self, spectrum: list) -> None:
-        self.spectrum = spectrum
+    def set_simulated_spectrum(self, simulated_spectrum: list) -> None:
+        self.simulated_spectrum = simulated_spectrum
+
+    def set_computed_spectrum(self, computed_spectrum: list) -> None:
+        self.computed_spectrum = computed_spectrum
 
     #   Core getters
     def get_probs(self) -> list:
         return self.probs
 
-    def get_spectrum(self) -> list:
-        return self.spectrum
+    def get_simulated_spectrum(self) -> list:
+        return self.simulated_spectrum
+
+    def get_computed_spectrum(self) -> list:
+        return self.computed_spectrum
