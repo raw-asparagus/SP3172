@@ -8,12 +8,11 @@ class Coffey(KnapsackProblem):
     def __init__(self, profits: np.ndarray, weights: np.ndarray, capacity: int) -> None:
         super().__init__(profits, weights, capacity)
         self.set_params()
-
+        self.set_output_status(True)
         self.H_0_state = "transverse"
         print(
             "Note that by default, H_0 will use take the form of a transverse Hamiltonian!\n"
         )
-
         self.H_0 = None
         self.set_gamma()
         self.H_P = None
@@ -24,28 +23,34 @@ class Coffey(KnapsackProblem):
 
     #   Core Setters
     def set_params(self) -> None:
-        self.M = int(np.floor(np.log2(self.get_capacity())))
+        self.M = np.floor(np.log2(self.get_capacity())).astype(int)
         self.total_qubits = self.get_num_items() + self.get_M() + 1
-        self.num_states = np.power(2, self.total_qubits)
+        self.num_states = np.power(2, self.total_qubits).astype(int)
 
     def set_gamma(self, gamma: float = 1.0) -> None:
         self.gamma = gamma
-        print(f"gamma parameter has been set to: {self.get_gamma()}")
         if self.gamma == 0.0:
-            print("Note that setting gamma to 0.0 nullifies H_0!")
-        print("")
+            if self.get_output_status():
+                print("Note that setting gamma to 0.0 nullifies H_0!")
+        if self.get_output_status():
+            print(f"gamma parameter has been set to: {self.get_gamma()}\n")
 
         self.set_H_0()
 
     def set_alpha(self, alpha: float = 0.0) -> None:
         if alpha <= np.max(self.get_profits()):
             if alpha != 0.0:
-                print("Invalid alpha parameter!")
-            self.alpha = np.max(self.get_profits()) + 1
-            print(f"alpha parameter has been set to default as: {self.get_alpha()}\n")
+                if self.get_output_status():
+                    print("Invalid alpha parameter!")
+            self.alpha = np.max(self.get_profits()).astype(float) + 1
+            if self.get_output_status():
+                print(
+                    f"alpha parameter has been set to default as: {self.get_alpha()}\n"
+                )
         else:
             self.alpha = alpha
-            print(f"alpha parameter has been set to: {self.get_alpha()}\n")
+            if self.get_output_status():
+                print(f"alpha parameter has been set to: {self.get_alpha()}\n")
 
         self.set_H_P()
 
@@ -53,23 +58,31 @@ class Coffey(KnapsackProblem):
         match H_0_state:
             case "mixed":
                 self.H_0_state = "mixed"
-                print(f"H_0 set as {self.get_H_0_state()}!\n")
+                if self.get_output_status():
+                    print(f"H_0 set as {self.get_H_0_state()}!\n")
 
             case "transverse":
                 self.H_0_state = "transverse"
-                print(f"H_0 set as {self.get_H_0_state()}!\n")
+                if self.get_output_status():
+                    print(f"H_0 set as {self.get_H_0_state()}!\n")
 
             case "original":
                 self.H_0_state = "original"
-                print(f"H_0 set as {self.get_H_0_state()}!\n")
+                if self.get_output_status():
+                    print(f"H_0 set as {self.get_H_0_state()}!\n")
 
             case _:
                 self.H_0_state = "transverse"
-                print(
-                    "Choice of H_0 failed! H_0 has been set to default as transverse!\nPlease try again!"
-                )
+                if self.get_output_status():
+                    print(
+                        "Choice of H_0 failed! H_0 has been set to default as transverse!\nPlease try again!\n"
+                    )
 
         self.set_H_0()
+
+    #   Core Auxiliary Setters
+    def set_output_status(self, output_status: bool) -> None:
+        self.output_status = output_status
 
     #   Setters
     def set_H_0(self) -> None:
@@ -127,22 +140,23 @@ class Coffey(KnapsackProblem):
     def get_gamma(self) -> float:
         return self.gamma
 
-    def get_alpha(self) -> float:
+    def get_alpha(self) -> np.int64:
         return self.alpha
 
     def get_H_0_state(self) -> str:
         return self.H_0_state
 
+    #   Core Auxiliary Getters
+    def get_output_status(self) -> bool:
+        return self.output_status
+
     #   Getters
     def calculate_total_ancillary_weight(
-        self, ancillary_bits: str, modifier_bit=None
+        self, ancillary_bits: str, modifier_bit: str
     ) -> int:
-        if modifier_bit is not None:
-            modifier = int(modifier_bit) * (
-                self.get_capacity() + 1 - np.power(2, self.get_M())
-            )
-        else:
-            modifier = 0
+        modifier = int(modifier_bit) * (
+            self.get_capacity() + 1 - np.power(2, self.get_M())
+        )
         ancillary_weight = sum(
             np.power(2, i) for i, val in enumerate(ancillary_bits) if int(val) == 1
         )
@@ -185,7 +199,7 @@ class Coffey(KnapsackProblem):
 
         return res
 
-    def compute_probs(self, res: Result, num_steps) -> list:
+    def compute_probs(self, res: Result, num_steps: int) -> list:
         """Using result from anneal"""
         interpolate = np.round(np.linspace(0, len(res.states) - 1, num_steps)).astype(
             int
@@ -200,13 +214,15 @@ class Coffey(KnapsackProblem):
 
         return probs_lst
 
-    def simulate_spectrum(self, num_steps: int) -> list:
+    def simulate_spectrum(self, num_steps: int) -> tuple:
         """Independent from anneal"""
-        spectrum_lst = [self.get_H(t).eigenenergies() for t in self.gen_ts(num_steps)]
+        spectrum_lst = tuple(
+            self.get_H(t).eigenenergies() for t in self.gen_ts(num_steps)
+        )
 
         return spectrum_lst
 
-    def compute_spectrum(self, res: Result, num_steps: int) -> list:
+    def compute_spectrum(self, res: Result, num_steps: int) -> tuple:
         """Using result from anneal"""
         interpolate = np.round(np.linspace(0, len(res.states) - 1, num_steps)).astype(
             int
@@ -214,9 +230,27 @@ class Coffey(KnapsackProblem):
         times = np.array(res.times)[interpolate]
         states = np.array(res.states)[interpolate]
 
-        energies = [expect(self.get_H(t), psi) for t, psi in zip(times, states)]
+        energies = tuple(expect(self.get_H(t), psi) for t, psi in zip(times, states))
 
         return energies
+
+    def get_H_P_ground_states(self) -> list:
+        eigenenergies, eigenstates = self.get_H(1).eigenstates()
+        ground_energy = min(eigenenergies)
+
+        basis_system = Basis(self.get_total_qubits())
+
+        ground_state_lst = []
+        for energy, psi in zip(eigenenergies, eigenstates):
+            if energy == ground_energy:
+                for idx, state in enumerate(basis_system.get_basis_states()):
+                    prob = np.power(np.abs(state.dag() * psi), 2)
+                    if prob > 0:
+                        ground_state_lst.append(
+                            format(idx, f"0{self.get_total_qubits()}b")
+                        )
+
+        return ground_state_lst
 
 
 class MakeGraphCoffey(MakeGraph):
@@ -258,8 +292,8 @@ class MakeGraphCoffey(MakeGraph):
         return data
 
     #   Functionalities
-    def display_probs(self, coffey: Coffey) -> None:
-        table_data = self.tabulate_probs(coffey, self.get_probs())[:5]
+    def display_probs(self, coffey: Coffey, count: int = 5) -> None:
+        table_data = self.tabulate_probs(coffey, self.get_probs())[:count]
 
         for idx, val in enumerate(table_data):
             table_data[idx][1] = f"{val[1]:.4f}"
