@@ -1,7 +1,8 @@
-from .engine import *
-from qutip import Result, expect, mesolve
+from .engine import Gates, Observable, StandardBasis, Result, KnapsackProblem, MakeGraph
 from matplotlib import gridspec
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.linalg import expm
 import time
 
 
@@ -88,12 +89,13 @@ class Coffey(KnapsackProblem):
     #   Mutators
     def set_H_0(self) -> None:
         N = self.get_total_qubits()
+        dim = np.power(2, N)
+        H_0 = np.zeros((dim, dim), dtype=complex)
 
-        H_0 = 0
         match self.get_H_0_state():
             case "mixed":
                 H_0 -= sum(
-                    Gates.tensor_sigmax(i, N) * Gates.tensor_sigmax(j, N)
+                    Gates.tensor_sigmax(i, N) @ Gates.tensor_sigmax(j, N)
                     for i in range(N)
                     for j in range(i + 1, N)
                 )
@@ -122,7 +124,8 @@ class Coffey(KnapsackProblem):
             j_upper, N
         )
         H_A3 = -sum(self.get_weight(i) * Gates.tensor_bin(i, N) for i in range(i_upper))
-        H_A = (H_A1 + H_A2 + H_A3) ** 2
+        H_A_components = H_A1 + H_A2 + H_A3
+        H_A = H_A_components @ H_A_components
 
         H_B = -sum(self.get_profit(i) * Gates.tensor_bin(i, N) for i in range(i_upper))
 
@@ -164,13 +167,13 @@ class Coffey(KnapsackProblem):
 
         return modifier + ancillary_weight
 
-    def get_H_0(self) -> Qobj:
+    def get_H_0(self) -> np.ndarray:
         return self.H_0
 
-    def get_H_P(self) -> Qobj:
+    def get_H_P(self) -> np.ndarray:
         return self.H_P
 
-    def get_H(self, s: float) -> Qobj:
+    def get_H(self, s: float) -> np.ndarray:
         return (1 - s) * self.get_H_0() + s * self.get_H_P()
 
     #   Static functionalities
@@ -183,8 +186,16 @@ class Coffey(KnapsackProblem):
         start = time.time()
 
         ts = self.gen_ts(num_steps)
-        psi0 = Observable.get_ground_eigenstate(self.get_H_0())
-        res = mesolve(self.get_H, psi0, ts, e_ops=[])
+        states = [Observable.get_ground_state(self.get_H_0())]
+
+        for idx, t in enumerate(ts[:-1]):
+            t_next = ts[idx + 1]
+            dt = t_next - t
+
+            U = expm(-1j * self.get_H(t) * dt)
+            states.append(U @ states[-1])
+
+        res = Result(states, ts)
 
         end = time.time()
         if self.get_output_status():
@@ -194,44 +205,45 @@ class Coffey(KnapsackProblem):
     def compute_probs(self, res: Result, num_steps: int) -> list:
         start = time.time()
 
-        interpolate = np.round(np.linspace(0, len(res.states) - 1, num_steps)).astype(
-            int
-        )
+        interpolate = np.round(
+            np.linspace(0, len(res.get_states()) - 1, num_steps)
+        ).astype(int)
         state_matrix = np.hstack(
-            [psi.full() for psi in list(np.array(res.states)[interpolate])]
+            [state.reshape(-1, 1) for state in np.array(res.get_states())[interpolate]]
         )
-        qubit_basis = Basis(self.get_total_qubits())
-        probs_lst = np.power(
-            np.abs(np.dot(qubit_basis.get_basis_matrix().T.conj(), state_matrix)), 2
-        ).T.tolist()
+        qubit_basis = StandardBasis(self.get_total_qubits())
+        basis_matrix = qubit_basis.get_basis_matrix()
+
+        probs = np.power(np.abs(basis_matrix.T.conj() @ state_matrix), 2).T.tolist()
 
         end = time.time()
         if self.get_output_status():
             print(f"Probabilities calculated in {end - start:.3f}s!")
-        return probs_lst
+        return probs
 
     def simulate_spectrum(self, num_steps: int) -> tuple:
         start = time.time()
-        
-        spectrum_lst = tuple(
-            self.get_H(t).eigenenergies() for t in self.gen_ts(num_steps)
-        )
+
+        eigenspectrum = tuple(np.linalg.eigvalsh(self.get_H(t)) for t in self.gen_ts(num_steps))
 
         end = time.time()
         if self.get_output_status():
             print(f"Probabilities calculated in {end - start:.3f}s!")
-        return spectrum_lst
+        return eigenspectrum
 
     def compute_spectrum(self, res: Result, num_steps: int) -> tuple:
         start = time.time()
 
-        interpolate = np.round(np.linspace(0, len(res.states) - 1, num_steps)).astype(
-            int
-        )
-        times = np.array(res.times)[interpolate]
-        states = np.array(res.states)[interpolate]
+        interpolate = np.round(
+            np.linspace(0, len(res.get_states()) - 1, num_steps)
+        ).astype(int)
+        ts = res.get_times()[interpolate]
+        states = np.array(res.get_states())[interpolate]
 
-        energies = tuple(expect(self.get_H(t), psi) for t, psi in zip(times, states))
+        energies = tuple(
+            np.real(np.conj(state).T @ self.get_H(t) @ state)
+            for t, state in zip(ts, states)
+        )
 
         end = time.time()
         if self.get_output_status():
@@ -239,27 +251,24 @@ class Coffey(KnapsackProblem):
         return energies
 
     def get_H_P_ground_states(self) -> list:
-        eigenenergies, eigenstates = self.get_H(1).eigenstates()
-        ground_energy = min(eigenenergies)
+        H = self.get_H_P()
+        ground_states = []
 
-        basis_system = Basis(self.get_total_qubits())
-
-        ground_state_lst = []
-        for energy, psi in zip(eigenenergies, eigenstates):
-            if energy == ground_energy:
-                for idx, state in enumerate(basis_system.get_basis_states()):
-                    prob = np.power(np.abs(state.dag() * psi), 2)
+        for idx, energy in enumerate(Observable.get_eigenvalues(H)):
+            if np.isclose(energy, Observable.get_ground_energy(H)):
+                vector = Observable.get_eigenstates(H)[:, idx]
+                basis = StandardBasis(self.get_total_qubits())
+                for i, state in enumerate(basis.get_basis_states()):
+                    prob = np.abs(state.conj().T @ vector) ** 2
                     if prob > 0:
-                        ground_state_lst.append(
-                            format(idx, f"0{self.get_total_qubits()}b")
-                        )
+                        ground_states.append(format(i, f"0{self.get_total_qubits()}b"))
 
-        return ground_state_lst
+        return ground_states
 
 
 class MakeGraphCoffey(MakeGraph):
-    def __init__(self) -> None:
-        super().__init__()
+    # def __init__(self) -> None:
+    #     super().__init__()
 
     #   Static functionalities
     @staticmethod
