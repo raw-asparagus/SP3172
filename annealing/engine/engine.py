@@ -5,6 +5,7 @@ import numpy as np
 class Matrix:
     SIGMAX = np.array([[0, 1], [1, 0]])
     SIGMAZ = np.array([[1, 0], [0, -1]])
+    IDENTITY = np.eye(2)
 
     @staticmethod
     def eye(n: int) -> np.ndarray:
@@ -18,20 +19,18 @@ class Matrix:
 class Gates:
     @staticmethod
     def tensor_sigmax(idx: int, n: int) -> np.ndarray:
-        ops = [Matrix.SIGMAX if i == idx else Matrix.eye(2) for i in range(n)]
+        ops = [Matrix.SIGMAX if i == idx else Matrix.IDENTITY for i in range(n)]
         return Matrix.tensor_product(ops)
 
     @staticmethod
     def tensor_sigmaz(idx: int, n: int) -> np.ndarray:
-        ops = [Matrix.SIGMAZ if i == idx else Matrix.eye(2) for i in range(n)]
+        ops = [Matrix.SIGMAZ if i == idx else Matrix.IDENTITY for i in range(n)]
         return Matrix.tensor_product(ops)
 
     @staticmethod
     def tensor_bin(idx: int, n: int) -> np.ndarray:
-        ops = [
-            (Matrix.eye(2) - Matrix.SIGMAZ) / 2 if i == idx else Matrix.eye(2)
-            for i in range(n)
-        ]
+        s = (Matrix.IDENTITY - Matrix.SIGMAZ) / 2
+        ops = [s if i == idx else Matrix.IDENTITY for i in range(n)]
         return Matrix.tensor_product(ops)
 
 
@@ -62,7 +61,7 @@ class StandardBasis:
         self.set_num_qubits(num_qubits)
         self.generate_basis_states()
 
-    # Core mutators
+    # Core mutators #
     def set_num_qubits(self, num_qubits: int) -> None:
         self.num_qubits = num_qubits
 
@@ -71,7 +70,7 @@ class StandardBasis:
         self.basis_matrix = np.eye(N, dtype=complex)
         self.basis_states = tuple(self.basis_matrix[:, i : i + 1] for i in range(N))
 
-    # Core accessors
+    # Core accessors #
     def get_num_qubits(self) -> int:
         return self.num_qubits
 
@@ -87,14 +86,14 @@ class Result:
         self.set_states(states)
         self.set_times(times)
 
-    #   Core Setters
+    #   Core mutators
     def set_states(self, states: list):
         self.states = states
 
     def set_times(self, times: np.ndarray):
         self.times = times
 
-    #   Core Getters
+    #   Core accessors
     def get_states(self) -> list:
         return self.states
 
@@ -112,7 +111,7 @@ class KnapsackProblem:
         self.set_capacity(capacity)
         self.set_num_items()
 
-    #   Core Setters
+    #   Core mutators
     def set_profits(self, profits: np.ndarray) -> None:
         self.profits = profits
 
@@ -125,7 +124,7 @@ class KnapsackProblem:
     def set_num_items(self) -> None:
         self.num_items = self.get_profits().shape[0]
 
-    #   Core Getters
+    #   Core accessors
     def get_profits(self) -> np.ndarray:
         return self.profits
 
@@ -144,14 +143,14 @@ class KnapsackProblem:
     def get_num_items(self) -> int:
         return self.num_items
 
-    # Getters
+    # Accessors
     def calculate_total_weight(self, item_bits: str) -> np.int64:
-        item_array = np.fromiter(map(int, item_bits), dtype=int)
-        return np.dot(self.weights, item_array)
+        total_weight = np.dot(self.weights, np.fromiter(map(int, item_bits), dtype=int))
+        return total_weight
 
     def calculate_total_profit(self, item_bits: str) -> np.int64:
-        item_array = np.fromiter(map(int, item_bits), dtype=int)
-        return np.dot(self.profits, item_array)
+        total_profit = np.dot(self.profits, np.fromiter(map(int, item_bits), dtype=int))
+        return total_profit
 
 
 class MakeGraph:
@@ -160,7 +159,7 @@ class MakeGraph:
         self.simulated_spectrum = []
         self.computed_spectrum = []
 
-    #   Core setters
+    #   Core mutators
     def set_probs(self, probs: list) -> None:
         self.probs = probs
 
@@ -170,7 +169,7 @@ class MakeGraph:
     def set_computed_spectrum(self, computed_spectrum: list) -> None:
         self.computed_spectrum = computed_spectrum
 
-    #   Core getters
+    #   Core accessors
     def get_probs(self) -> list:
         return self.probs
 

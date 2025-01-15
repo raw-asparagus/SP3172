@@ -3,6 +3,7 @@ from matplotlib import gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.linalg import expm
+from scipy.sparse.linalg import expm_multiply
 import time
 
 
@@ -19,14 +20,12 @@ class Coffey(KnapsackProblem):
         self.set_gamma()
         self.H_P = None
         self.set_alpha()
+        self.set_hbar()
 
-    #   Idea: add eqn 2a Hamiltonian for H_A
-    #   Rework to include old flag to toggle between eqn 2a, 3
-
-    #   Core Mutators
+    #   Core mutators
     def set_params(self) -> None:
         self.M = np.floor(np.log2(self.get_capacity())).astype(int)
-        self.total_qubits = self.get_num_items() + self.get_M() + 1
+        self.total_qubits = self.get_num_items() + self.M + 1
         self.num_states = np.power(2, self.total_qubits).astype(int)
 
     def set_gamma(self, gamma: float = 1.0) -> None:
@@ -38,23 +37,6 @@ class Coffey(KnapsackProblem):
             print(f"gamma parameter has been set to: {self.get_gamma()}\n")
 
         self.set_H_0()
-
-    def set_alpha(self, alpha: float = 0.0) -> None:
-        if alpha <= np.max(self.get_profits()):
-            if alpha != 0.0:
-                if self.get_output_status():
-                    print("Invalid alpha parameter!")
-            self.alpha = np.max(self.get_profits()).astype(float) + 1
-            if self.get_output_status():
-                print(
-                    f"alpha parameter has been set to default as: {self.get_alpha()}\n"
-                )
-        else:
-            self.alpha = alpha
-            if self.get_output_status():
-                print(f"alpha parameter has been set to: {self.get_alpha()}\n")
-
-        self.set_H_P()
 
     def set_H_0_state(self, H_0_state: str) -> None:
         match H_0_state:
@@ -82,7 +64,27 @@ class Coffey(KnapsackProblem):
 
         self.set_H_0()
 
-    #   Core Auxiliary Mutators
+    def set_alpha(self, alpha: float = 0.0) -> None:
+        if alpha <= np.max(self.get_profits()):
+            if alpha != 0.0:
+                if self.get_output_status():
+                    print("Invalid alpha parameter!")
+            self.alpha = np.max(self.get_profits()).astype(float) + 1
+            if self.get_output_status():
+                print(
+                    f"alpha parameter has been set to default as: {self.get_alpha()}\n"
+                )
+        else:
+            self.alpha = alpha
+            if self.get_output_status():
+                print(f"alpha parameter has been set to: {self.get_alpha()}\n")
+
+        self.set_H_P()
+
+    def set_hbar(self, hbar: float = 1.0) -> None:
+        self.hbar = hbar
+
+    #   Core auxiliary mutators
     def set_output_status(self, output_status: bool) -> None:
         self.output_status = output_status
 
@@ -131,7 +133,7 @@ class Coffey(KnapsackProblem):
 
         self.H_P = self.get_alpha() * H_A + H_B
 
-    #   Core Accessors
+    #   Core accessors
     def get_M(self) -> int:
         return self.M
 
@@ -144,29 +146,20 @@ class Coffey(KnapsackProblem):
     def get_gamma(self) -> float:
         return self.gamma
 
-    def get_alpha(self) -> np.int64:
-        return self.alpha
-
     def get_H_0_state(self) -> str:
         return self.H_0_state
 
-    #   Core Auxiliary Accessors
+    def get_alpha(self) -> np.int64:
+        return self.alpha
+
+    def get_hbar(self) -> float:
+        return self.hbar
+
+    #   Core auxiliary accessors
     def get_output_status(self) -> bool:
         return self.output_status
 
     #   Accessors
-    def calculate_total_ancillary_weight(
-        self, ancillary_bits: str, modifier_bit: str
-    ) -> int:
-        modifier = int(modifier_bit) * (
-            self.get_capacity() + 1 - np.power(2, self.get_M())
-        )
-        ancillary_weight = sum(
-            np.power(2, i) for i, val in enumerate(ancillary_bits) if int(val) == 1
-        )
-
-        return modifier + ancillary_weight
-
     def get_H_0(self) -> np.ndarray:
         return self.H_0
 
@@ -175,6 +168,14 @@ class Coffey(KnapsackProblem):
 
     def get_H(self, s: float) -> np.ndarray:
         return (1 - s) * self.get_H_0() + s * self.get_H_P()
+
+    def calculate_total_ancillary_weight(self, anc_bits: str, mod_bit: str) -> int:
+        modifier = int(mod_bit) * (self.get_capacity() + 1 - np.power(2, self.get_M()))
+        ancillary_weight = sum(
+            np.power(2, i) for i, val in enumerate(anc_bits) if int(val) == 1
+        )
+
+        return modifier + ancillary_weight
 
     #   Static functionalities
     @staticmethod
@@ -187,13 +188,12 @@ class Coffey(KnapsackProblem):
 
         ts = self.gen_ts(num_steps)
         states = [Observable.get_ground_state(self.get_H_0())]
+        Hs = [self.get_H(s) for s in ts]
+        dts = ts[1:] - ts[:-1]
 
-        for idx, t in enumerate(ts[:-1]):
-            t_next = ts[idx + 1]
-            dt = t_next - t
-
-            U = expm(-1j * self.get_H(t) * dt)
-            states.append(U @ states[-1])
+        for H, dt in zip(Hs[:-1], dts):
+            U = expm_multiply(-1j / self.get_hbar() * H * dt, states[-1])
+            states.append(U)
 
         res = Result(states, ts)
 
@@ -208,9 +208,8 @@ class Coffey(KnapsackProblem):
         interpolate = np.round(
             np.linspace(0, len(res.get_states()) - 1, num_steps)
         ).astype(int)
-        state_matrix = np.hstack(
-            [state.reshape(-1, 1) for state in np.array(res.get_states())[interpolate]]
-        )
+        states = np.array(res.get_states())[interpolate]
+        state_matrix = np.hstack([state.reshape(-1, 1) for state in states])
         qubit_basis = StandardBasis(self.get_total_qubits())
         basis_matrix = qubit_basis.get_basis_matrix()
 
@@ -224,7 +223,9 @@ class Coffey(KnapsackProblem):
     def simulate_spectrum(self, num_steps: int) -> tuple:
         start = time.time()
 
-        eigenspectrum = tuple(np.linalg.eigvalsh(self.get_H(t)) for t in self.gen_ts(num_steps))
+        eigenspectrum = tuple(
+            np.linalg.eigvalsh(self.get_H(t)) for t in self.gen_ts(num_steps)
+        )
 
         end = time.time()
         if self.get_output_status():
