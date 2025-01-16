@@ -3,8 +3,9 @@ from matplotlib import gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.linalg import expm
+from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import expm_multiply
-import time
+import qutip as qt
 
 
 class Coffey(KnapsackProblem):
@@ -13,9 +14,7 @@ class Coffey(KnapsackProblem):
         self.set_params()
         self.set_output_status(True)
         self.H_0_state = "transverse"
-        print(
-            "Note that by default, H_0 will use take the form of a transverse Hamiltonian!\n"
-        )
+        print("Note that by default, H_0 is transverse!\n")
         self.H_0 = None
         self.set_gamma()
         self.H_P = None
@@ -34,7 +33,7 @@ class Coffey(KnapsackProblem):
             if self.get_output_status():
                 print("Note that setting gamma to 0.0 nullifies H_0!")
         if self.get_output_status():
-            print(f"gamma parameter has been set to: {self.get_gamma()}\n")
+            print(f"gamma has been set to: {self.get_gamma()}\n")
 
         self.set_H_0()
 
@@ -59,7 +58,7 @@ class Coffey(KnapsackProblem):
                 self.H_0_state = "transverse"
                 if self.get_output_status():
                     print(
-                        "Choice of H_0 failed! H_0 has been set to default as transverse!\nPlease try again!\n"
+                        "Choice of H_0 failed! H_0 has been defaulted as transverse!\nPlease try again!\n"
                     )
 
         self.set_H_0()
@@ -68,16 +67,14 @@ class Coffey(KnapsackProblem):
         if alpha <= np.max(self.get_profits()):
             if alpha != 0.0:
                 if self.get_output_status():
-                    print("Invalid alpha parameter!")
+                    print("Invalid alpha!")
             self.alpha = np.max(self.get_profits()).astype(float) + 1
             if self.get_output_status():
-                print(
-                    f"alpha parameter has been set to default as: {self.get_alpha()}\n"
-                )
+                print(f"alpha has been set to: {self.get_alpha()} (default)\n")
         else:
             self.alpha = alpha
             if self.get_output_status():
-                print(f"alpha parameter has been set to: {self.get_alpha()}\n")
+                print(f"alpha has been set to: {self.get_alpha()}\n")
 
         self.set_H_P()
 
@@ -172,7 +169,7 @@ class Coffey(KnapsackProblem):
     def calculate_total_ancillary_weight(self, anc_bits: str, mod_bit: str) -> int:
         modifier = int(mod_bit) * (self.get_capacity() + 1 - np.power(2, self.get_M()))
         ancillary_weight = sum(
-            np.power(2, i) for i, val in enumerate(anc_bits) if int(val) == 1
+            np.power(2, idx) for idx, val in enumerate(anc_bits) if int(val) == 1
         )
 
         return modifier + ancillary_weight
@@ -184,71 +181,101 @@ class Coffey(KnapsackProblem):
 
     #   Functionalities
     def anneal(self, num_steps: int) -> Result:
-        start = time.time()
-
         ts = self.gen_ts(num_steps)
         states = [Observable.get_ground_state(self.get_H_0())]
-        Hs = [self.get_H(s) for s in ts]
         dts = ts[1:] - ts[:-1]
+        Hs = [self.get_H(s) for s in ts[:-1]]
 
-        for H, dt in zip(Hs[:-1], dts):
-            U = expm_multiply(-1j / self.get_hbar() * H * dt, states[-1])
-            states.append(U)
+        for H, dt in zip(Hs, dts):
+            exponent = -1j / self.get_hbar() * H * dt
+            states.append(expm(exponent) @ states[-1])
 
-        res = Result(states, ts)
-
-        end = time.time()
-        if self.get_output_status():
-            print(f"Annealing complete in {end - start:.3f}s!")
+        res = Result(np.array(states), ts)
         return res
 
-    def compute_probs(self, res: Result, num_steps: int) -> list:
-        start = time.time()
+    def anneal_magnus(self, num_steps: int) -> Result:
+        ts = self.gen_ts(num_steps)
+        states = [Observable.get_ground_state(self.get_H_0())]
+        dts = ts[1:] - ts[:-1]
 
-        interpolate = np.round(
-            np.linspace(0, len(res.get_states()) - 1, num_steps)
-        ).astype(int)
-        states = np.array(res.get_states())[interpolate]
+        for idx, dt in enumerate(dts):
+            H_mid = self.get_H((ts[idx] + ts[idx + 1]) / 2)
+            Omega1 = -1j / self.get_hbar() * H_mid * dt
+            states.append(expm(Omega1) @ states[-1])
+
+        res = Result(np.array(states), ts)
+        return res
+
+    def anneal_sparse(self, num_steps: int) -> Result:
+        ts = self.gen_ts(num_steps)
+        states = [
+            Observable.get_ground_state(self.get_H_0())
+        ]  # Assuming sparse ground state solver
+        dts = ts[1:] - ts[:-1]
+        Hs = [csr_matrix(self.get_H(s)) for s in ts[:-1]]  # Convert to sparse matrices
+
+        for H, dt in zip(Hs, dts):
+            exponent = -1j / self.get_hbar() * dt
+            states.append(
+                expm_multiply(exponent * H, states[-1])
+            )  # Sparse matrix exponentiation
+
+        res = Result(np.array(states), ts)
+        return res
+
+    def anneal_magnus_sparse(self, num_steps: int) -> Result:
+        ts = self.gen_ts(num_steps)
+        states = [Observable.get_ground_state(self.get_H_0())]
+        dts = ts[1:] - ts[:-1]
+
+        for idx, dt in enumerate(dts):
+            H_mid = csr_matrix(
+                self.get_H((ts[idx] + ts[idx + 1]) / 2)
+            )  # Midpoint Hamiltonian
+            exponent = -1j / self.get_hbar() * dt
+            states.append(
+                expm_multiply(exponent * H_mid, states[-1])
+            )  # Sparse matrix exponentiation
+
+        res = Result(np.array(states), ts)
+        return res
+
+    def anneal_mesolve(self, num_steps: int) -> Result:
+        ts = self.gen_ts(num_steps)
+        states = [qt.Qobj(Observable.get_ground_state(self.get_H_0()))]
+
+        res = qt.mesolve(lambda t: qt.Qobj(self.get_H(t)), states[-1], ts, e_ops=[])
+
+        new_res = Result(
+            np.squeeze(np.array([state.full() for state in res.states])), ts
+        )
+
+        return new_res
+
+    def compute_probs(self, res: Result, num_steps: int) -> list:
+        states = res.interpolate_states(num_steps)
         state_matrix = np.hstack([state.reshape(-1, 1) for state in states])
+
         qubit_basis = StandardBasis(self.get_total_qubits())
         basis_matrix = qubit_basis.get_basis_matrix()
 
-        probs = np.power(np.abs(basis_matrix.T.conj() @ state_matrix), 2).T.tolist()
-
-        end = time.time()
-        if self.get_output_status():
-            print(f"Probabilities calculated in {end - start:.3f}s!")
+        probs = np.square(np.abs(basis_matrix.T.conj() @ state_matrix)).T.tolist()
         return probs
 
     def simulate_spectrum(self, num_steps: int) -> tuple:
-        start = time.time()
-
         eigenspectrum = tuple(
             np.linalg.eigvalsh(self.get_H(t)) for t in self.gen_ts(num_steps)
         )
-
-        end = time.time()
-        if self.get_output_status():
-            print(f"Probabilities calculated in {end - start:.3f}s!")
         return eigenspectrum
 
     def compute_spectrum(self, res: Result, num_steps: int) -> tuple:
-        start = time.time()
-
-        interpolate = np.round(
-            np.linspace(0, len(res.get_states()) - 1, num_steps)
-        ).astype(int)
-        ts = res.get_times()[interpolate]
-        states = np.array(res.get_states())[interpolate]
+        ts = res.interpolate_times(num_steps)
+        states = res.interpolate_states(num_steps)
 
         energies = tuple(
             np.real(np.conj(state).T @ self.get_H(t) @ state)
             for t, state in zip(ts, states)
         )
-
-        end = time.time()
-        if self.get_output_status():
-            print(f"Spectrum simulated in {end - start:.3f}s!")
         return energies
 
     def get_H_P_ground_states(self) -> list:
@@ -268,8 +295,13 @@ class Coffey(KnapsackProblem):
 
 
 class MakeGraphCoffey(MakeGraph):
-    # def __init__(self) -> None:
-    #     super().__init__()
+    def __init__(
+        self, probs: list, simulated_spectrum: tuple, computed_spectrum: tuple
+    ) -> None:
+        super().__init__()
+        self.set_probs(probs)
+        self.set_simulated_spectrum(simulated_spectrum)
+        self.set_computed_spectrum(computed_spectrum)
 
     #   Static functionalities
     @staticmethod
@@ -434,11 +466,14 @@ class MakeGraphCoffey(MakeGraph):
 
         ax3 = fig.add_subplot(gs[1, 0])
         ax3.semilogy(
-            probs_ts, [1 - sum(prob) for prob in self.get_probs()], ls="", marker="."
+            probs_ts,
+            np.abs(np.array([1 - sum(probs) for probs in self.get_probs()])),
+            ls="",
+            marker=".",
         )
         ax3.set(
             xlabel="Time units",
-            ylabel=r"$1 - \sum P$",
+            ylabel=r"$\left|1 - \sum P\right|$",
             title=r"Total probability difference from $1$",
         )
         ax3.grid(True, alpha=0.25)

@@ -1,3 +1,3 @@
-from .engine import Coffey, MakeGraphCoffey
+from .engine import wrap, Coffey, MakeGraphCoffey
 
-__all__ = ["Coffey", "MakeGraphCoffey"]
+__all__ = ["wrap", "Coffey", "MakeGraphCoffey"]

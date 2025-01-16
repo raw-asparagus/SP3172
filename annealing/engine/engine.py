@@ -1,5 +1,6 @@
 from functools import reduce
 import numpy as np
+import time
 
 
 class Matrix:
@@ -82,26 +83,46 @@ class StandardBasis:
 
 
 class Result:
-    def __init__(self, states: list, times: np.ndarray) -> None:
+    def __init__(self, states: np.ndarray, times: np.ndarray) -> None:
+        self.set_len(times.shape[0])
         self.set_states(states)
         self.set_times(times)
 
     #   Core mutators
-    def set_states(self, states: list):
+    def set_states(self, states: np.ndarray):
         self.states = states
 
     def set_times(self, times: np.ndarray):
         self.times = times
 
+    def set_len(self, length: int) -> None:
+        self.length = length
+
     #   Core accessors
-    def get_states(self) -> list:
+    def get_states(self) -> np.ndarray:
         return self.states
 
-    def get_final_state(self) -> list:
+    def get_final_state(self) -> np.ndarray:
         return self.states[-1]
+
+    def get_len(self) -> int:
+        return self.length
 
     def get_times(self) -> np.ndarray:
         return self.times
+
+    #   Functionalities
+    def interpolate_times(self, num_steps: int) -> np.ndarray:
+        interpolate = np.round(np.linspace(0, self.get_len() - 1, num_steps)).astype(
+            int
+        )
+        return self.get_times()[interpolate]
+
+    def interpolate_states(self, num_steps: int) -> np.ndarray:
+        interpolate = np.round(np.linspace(0, self.get_len() - 1, num_steps)).astype(
+            int
+        )
+        return self.get_states()[interpolate]
 
 
 class KnapsackProblem:
@@ -177,4 +198,14 @@ class MakeGraph:
         return self.simulated_spectrum
 
     def get_computed_spectrum(self) -> tuple:
+
         return self.computed_spectrum
+
+
+def wrap(func, name: str, args: tuple):
+    start = time.time()
+    result = func(args)
+    end = time.time()
+
+    print(f"{name}() executed in {end - start:.3f}s")
+    return result
