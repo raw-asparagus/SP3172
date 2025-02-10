@@ -3,8 +3,6 @@ from matplotlib import gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.linalg import expm
-from scipy.sparse import csr_matrix
-from scipy.sparse.linalg import expm_multiply
 import qutip as qt
 
 
@@ -118,7 +116,7 @@ class Coffey(KnapsackProblem):
         H_A1 = sum(
             np.power(2, j - j_lower) * Gates.tensor_bin(j, N)
             for j in range(j_lower, j_upper)
-        )  #   starting from the 1st ancillary qubit
+        )  # starting from the 1st ancillary qubit
         H_A2 = (self.get_capacity() + 1 - np.power(2, self.get_M())) * Gates.tensor_bin(
             j_upper, N
         )
@@ -206,40 +204,6 @@ class Coffey(KnapsackProblem):
         res = Result(np.array(states), ts)
         return res
 
-    def anneal_sparse(self, num_steps: int) -> Result:
-        ts = self.gen_ts(num_steps)
-        states = [
-            Observable.get_ground_state(self.get_H_0())
-        ]  # Assuming sparse ground state solver
-        dts = ts[1:] - ts[:-1]
-        Hs = [csr_matrix(self.get_H(s)) for s in ts[:-1]]  # Convert to sparse matrices
-
-        for H, dt in zip(Hs, dts):
-            exponent = -1j / self.get_hbar() * dt
-            states.append(
-                expm_multiply(exponent * H, states[-1])
-            )  # Sparse matrix exponentiation
-
-        res = Result(np.array(states), ts)
-        return res
-
-    def anneal_magnus_sparse(self, num_steps: int) -> Result:
-        ts = self.gen_ts(num_steps)
-        states = [Observable.get_ground_state(self.get_H_0())]
-        dts = ts[1:] - ts[:-1]
-
-        for idx, dt in enumerate(dts):
-            H_mid = csr_matrix(
-                self.get_H((ts[idx] + ts[idx + 1]) / 2)
-            )  # Midpoint Hamiltonian
-            exponent = -1j / self.get_hbar() * dt
-            states.append(
-                expm_multiply(exponent * H_mid, states[-1])
-            )  # Sparse matrix exponentiation
-
-        res = Result(np.array(states), ts)
-        return res
-
     def anneal_mesolve(self, num_steps: int) -> Result:
         ts = self.gen_ts(num_steps)
         states = [qt.Qobj(Observable.get_ground_state(self.get_H_0()))]
@@ -296,7 +260,7 @@ class Coffey(KnapsackProblem):
 
 class MakeGraphCoffey(MakeGraph):
     def __init__(
-        self, probs: list, simulated_spectrum: tuple, computed_spectrum: tuple
+            self, probs: list, simulated_spectrum: tuple, computed_spectrum: tuple
     ) -> None:
         super().__init__()
         self.set_probs(probs)
@@ -315,8 +279,8 @@ class MakeGraphCoffey(MakeGraph):
         for state_label, prob in sorted(final_probs, key=lambda x: x[1], reverse=True):
             item_bits = state_label[: coffey.get_num_items()]
             ancillary_bits = state_label[
-                coffey.get_num_items() : coffey.get_num_items() + coffey.get_M()
-            ]
+                             coffey.get_num_items(): coffey.get_num_items() + coffey.get_M()
+                             ]
             modifier_bit = state_label[coffey.get_num_items() + coffey.get_M()]
 
             item_weight = coffey.calculate_total_weight(item_bits)

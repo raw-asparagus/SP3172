@@ -69,7 +69,7 @@ class StandardBasis:
     def generate_basis_states(self) -> None:
         N = np.power(2, self.get_num_qubits())
         self.basis_matrix = np.eye(N, dtype=complex)
-        self.basis_states = tuple(self.basis_matrix[:, i : i + 1] for i in range(N))
+        self.basis_states = tuple(self.basis_matrix[:, i: i + 1] for i in range(N))
 
     # Core accessors #
     def get_num_qubits(self) -> int:
@@ -198,7 +198,6 @@ class MakeGraph:
         return self.simulated_spectrum
 
     def get_computed_spectrum(self) -> tuple:
-
         return self.computed_spectrum
 
 
