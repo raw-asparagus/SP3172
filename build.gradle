@@ -1,0 +1,39 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+repositories {
+    mavenCentral()
+    // If you need snapshots for EJML:
+    // maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+}
+
+dependencies {
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.10.0'
+    testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.10.0'
+
+    // EJML for complex operations
+    implementation "org.ejml:ejml-all:0.43"
+    // Remove or comment out any references to JBLAS or other libraries if no longer needed
+}
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass.set("quantum.Quantum")
+}
+
+shadowJar {
+    archiveBaseName = "quantum"
+    archiveVersion = "0.1.0"
+    archiveClassifier = null
+}
+
+run {
+    standardInput = System.in
+    enableAssertions = true
+}
