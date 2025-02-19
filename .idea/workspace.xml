@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="BackendCodeEditorMiscSettings">
+    <option name="/Default/RiderDebugger/RiderRestoreDecompile/RestoreDecompileSetting/@EntryValue" value="false" type="bool" />
+    <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
+    <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
+  </component>
+  <component name="CMakeProjectFlavorService">
+    <option name="flavorId" value="CMakePlainProjectFlavor" />
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="9b9fe019-c63e-4633-ad21-2435421f8bf8" name="Changes" comment="[DEV] Implement Cat code on Java">
+      <change beforePath="$PROJECT_DIR$/annealing/main.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/annealing/main.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/Quantum.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/basis/Basis.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/basis/CatBasis.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/basis/StandardBasis.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/io/Console.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/io/MatrixIO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/knapsack/Knapsack.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/observable/Observable.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/solver/Anneal.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/solver/Solver.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/storage/Storage.java" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager">
+    <option name="groupingKeys">
+      <option value="directory" />
+    </option>
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <task path="$PROJECT_DIR$">
+          <activation />
+        </task>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="SP3172" type="f1a62948:ProjectNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="SP3172" type="f1a62948:ProjectNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="SP3172" type="f1a62948:ProjectNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="build" type="c8890929:TasksNode$1" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;raw-asparagus&quot;
+  }
+}</component>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="c3f5d56c-2adb-4877-b923-b7732e539d54" />
+  </component>
+  <component name="GithubProjectSettings">
+    <option name="branchProtectionPatterns">
+      <list>
+        <option value="master" />
+      </list>
+    </option>
+  </component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/raw-asparagus/SP3172.git&quot;,
+    &quot;accountId&quot;: &quot;f278d0be-76c3-40af-9eeb-037301cbd5fa&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="2stykwmDVm6L9Id2063p3B6srAZ" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="openDirectoriesWithSingleClick" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Quantum.executor&quot;: &quot;Run&quot;,
+    &quot;Application.knapsack.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.SP3172 [:quantum.Quantum.main()].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.SP3172 [buildDependents].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.SP3172 [build].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.SP3172 [run].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/junruiting/GitHub/SP3172&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/java" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="quantum.observable" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="SP3172 [run]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="run" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>false</RunAsTest>
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-76f8388c3a79-JavaScript-PY-243.24978.54" />
+        <option value="bundled-python-sdk-91e3b7efe1d4-466328ff949b-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-243.24978.54" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="9b9fe019-c63e-4633-ad21-2435421f8bf8" name="Changes" comment="" />
+      <created>1739289311708</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1739289311708</updated>
+      <workItem from="1739289312788" duration="14039000" />
+      <workItem from="1739351371261" duration="342000" />
+      <workItem from="1739351726069" duration="790000" />
+      <workItem from="1739360974213" duration="2454000" />
+      <workItem from="1739429332050" duration="2990000" />
+      <workItem from="1739433235272" duration="5374000" />
+      <workItem from="1739464156120" duration="7998000" />
+      <workItem from="1739493071797" duration="21887000" />
+      <workItem from="1739549393545" duration="2518000" />
+      <workItem from="1739552108243" duration="713000" />
+      <workItem from="1739575589065" duration="4707000" />
+      <workItem from="1739601648255" duration="7333000" />
+      <workItem from="1739615767499" duration="20000" />
+      <workItem from="1739615796599" duration="496000" />
+      <workItem from="1739616326616" duration="37000" />
+      <workItem from="1739620035266" duration="602000" />
+      <workItem from="1739635564900" duration="1936000" />
+      <workItem from="1739679317587" duration="49000" />
+      <workItem from="1739679459643" duration="220000" />
+      <workItem from="1739679688185" duration="117000" />
+      <workItem from="1739679814234" duration="16000" />
+      <workItem from="1739679850622" duration="126000" />
+      <workItem from="1739685534820" duration="804000" />
+      <workItem from="1739686904114" duration="1445000" />
+      <workItem from="1739692540896" duration="839000" />
+      <workItem from="1739703466084" duration="2312000" />
+      <workItem from="1739721086117" duration="4978000" />
+      <workItem from="1739765745768" duration="11000" />
+      <workItem from="1739788981515" duration="657000" />
+      <workItem from="1739954249199" duration="802000" />
+    </task>
+    <task id="LOCAL-00001" summary="[DEV] Implement Cat code on Java">
+      <option name="closed" value="true" />
+      <created>1739443533637</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1739443533637</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="[DEV] Implement Cat code on Java" />
+    <option name="LAST_COMMIT_MESSAGE" value="[DEV] Implement Cat code on Java" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/SP3172$SP3172__run_.ic" NAME="SP3172 [run] Coverage Results" MODIFIED="1739444116844" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />
+  </component>
+</project>
