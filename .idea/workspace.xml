@@ -17,21 +17,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9b9fe019-c63e-4633-ad21-2435421f8bf8" name="Changes" comment="[DEV] Implement Cat code on Java">
-      <change beforePath="$PROJECT_DIR$/annealing/main.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/annealing/main.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/Quantum.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/basis/Basis.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/basis/CatBasis.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/basis/StandardBasis.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/io/Console.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/io/MatrixIO.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/knapsack/Knapsack.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/observable/Observable.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/solver/Anneal.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/solver/Solver.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/quantum/storage/Storage.java" beforeDir="false" />
-    </list>
+    <list default="true" id="9b9fe019-c63e-4633-ad21-2435421f8bf8" name="Changes" comment="[DEV] Implement Cat code on Java" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -97,9 +83,6 @@
     &quot;assignee&quot;: &quot;raw-asparagus&quot;
   }
 }</component>
-  <component name="GithubDefaultAccount">
-    <option name="defaultAccountId" value="c3f5d56c-2adb-4877-b923-b7732e539d54" />
-  </component>
   <component name="GithubProjectSettings">
     <option name="branchProtectionPatterns">
       <list>
@@ -122,37 +105,36 @@
     <option name="openDirectoriesWithSingleClick" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
-    &quot;Application.Quantum.executor&quot;: &quot;Run&quot;,
-    &quot;Application.knapsack.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.SP3172 [:quantum.Quantum.main()].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.SP3172 [buildDependents].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.SP3172 [build].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.SP3172 [run].executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/junruiting/GitHub/SP3172&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Main.executor": "Run",
+    "Application.Quantum.executor": "Run",
+    "Application.knapsack.executor": "Run",
+    "Gradle.SP3172 [:quantum.Quantum.main()].executor": "Run",
+    "Gradle.SP3172 [buildDependents].executor": "Run",
+    "Gradle.SP3172 [build].executor": "Run",
+    "Gradle.SP3172 [run].executor": "Run",
+    "RunOnceActivity.RadMigrateCodeStyle": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/junruiting/GitHub/SP3172",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "org.jetbrains.plugins.github.ui.GithubSettingsConfigurable",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/main/java" />
@@ -230,7 +212,7 @@
       <workItem from="1739721086117" duration="4978000" />
       <workItem from="1739765745768" duration="11000" />
       <workItem from="1739788981515" duration="657000" />
-      <workItem from="1739954249199" duration="802000" />
+      <workItem from="1739954249199" duration="1240000" />
     </task>
     <task id="LOCAL-00001" summary="[DEV] Implement Cat code on Java">
       <option name="closed" value="true" />

@@ -155,7 +155,10 @@ class Result:
             num_points: Number of analysis points
         """
         self._compute_probabilities(num_points)
-        self._compute_expectation_values()
+        if np.allclose(self._states[1], self._states[-2]):
+            self._compute_expectation_values_alt()
+        else:
+            self._compute_expectation_values()
         self._compute_eigenspectrum()
 
     def _compute_probabilities(self, num_points: int) -> None:
@@ -177,6 +180,12 @@ class Result:
         self._expectation_values = np.array([
             obs.measure(state)
             for obs, state in zip(self._observables, self._states)
+        ])
+
+    def _compute_expectation_values_alt(self) -> None:
+        """Compute expectation values for start and end states."""
+        self._expectation_values = np.array([
+            self._observables[0].measure(self._states[0]), self._observables[-1].measure(self._states[-1])
         ])
 
     def _compute_eigenspectrum(self) -> None:

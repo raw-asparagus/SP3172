@@ -178,7 +178,7 @@ class QuantumAnnealer(Solver):
 
         fn = lambda t: ((t - t ** 2 / 2 / end) * self._mixing_hamiltonian + t ** 2 / 2 / end * self._mapping.problem_hamiltonian) / end
         unitary_evolution = Unitary(fn(end) - fn(0.0), self._params.energy_scale)
-        self._states[1] = unitary_evolution.evolve(self._states[0])
+        self._states[-1] = unitary_evolution.evolve(self._states[0])
 
     def solve_alt_numerical(self) -> None:
         """Execute alternative quantum annealing evolution.
@@ -197,7 +197,7 @@ class QuantumAnnealer(Solver):
             for i in range(fn(1.0).shape[0])
         ])
         unitary_evolution = Unitary(matrix, self._params.energy_scale)
-        self._states[1] = unitary_evolution.evolve(self._states[0])
+        self._states[-1] = unitary_evolution.evolve(self._states[0])
 
     def get_result(self, num_points: int) -> Result:
         """Get annealing results.
