@@ -9,6 +9,9 @@ class twoD_oscillator2(ThreeDScene):
     def V(self, x, y):
         # return np.sin(0.5*x) + np.sin(y) + np.sin(x) + 0.05*x**2 + 0.03*y**2
         return 0.5*(x-1)**2
+    
+    def parabolic(self, x):
+        return (x, 0, 0.5*(x-1)**2)
 
     def acc(self, x, y, delta=0.0001):
         dV_dx = 0.5 * (self.V(x + delta, y) - self.V(x - delta, y)) / delta
@@ -81,6 +84,14 @@ class twoD_oscillator2(ThreeDScene):
         self.move_camera(phi=90 * DEGREES, theta=-90*DEGREES)
 
         self.add(ball_height)
+
+        ball_path = ParametricFunction(self.ball_path_func, t_range=[0, len(t_axis)-1, 1], color=RED)
+
+        self.add(ball_path)
+
+        parabolic_path = ParametricFunction(self.parabolic, t_range=[0, 2, 0.001], color=GREEN)
+
+        self.add(parabolic_path)
 
         # self.begin_ambient_camera_rotation(
         #     rate=PI / 10, about="theta"
@@ -166,3 +177,41 @@ class EnergyLandscape(ThreeDScene):
 
         self.wait()
         print("waited")
+
+
+class AnalogComputing(Scene):
+    def construct(self):
+        disc_radius = 1
+        disc1 = Circle(disc_radius).set_fill(opacity=1).move_to(3*LEFT + 2*DOWN)
+        self.add(disc1)
+        disc1_horizonLine = Line(disc1.get_center(), end=disc1.get_center()+disc_radius*RIGHT)
+        disc1_rotateLine = Line(disc1.get_center(), end=disc1.get_center()+disc_radius*RIGHT)
+        self.add(disc1_horizonLine, disc1_rotateLine)
+        self.wait(1)
+
+
+        rad_1 = 0.6412
+        self.play(
+            Rotate(
+                disc1_rotateLine,
+                angle=rad_1,
+                about_point=disc1_rotateLine.start,
+                rate_func=linear
+            )
+        )
+        arc_1 = Arc(radius=0.5, angle=rad_1, color=WHITE).move_arc_center_to(disc1.get_center())
+        angle_1 = DecimalNumber(rad_1, num_decimal_places=4, font_size=20, color=WHITE).move_to(arc_1.get_center() + 0.4*RIGHT)
+        self.add(arc_1, angle_1)
+
+
+        # self.play(
+        #     Rotate(
+        #         Square(side_length=0.5).shift(UP * 2),
+        #         angle=2*PI,
+        #         about_point=ORIGIN,
+        #         rate_func=linear,
+        #     ),
+        #     Rotate(Square(side_length=0.5), angle=2*PI, rate_func=linear),
+        #     )
+        self.wait()
+
