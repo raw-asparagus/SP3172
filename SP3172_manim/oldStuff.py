@@ -484,6 +484,73 @@ class oneD_oscillator2(ThreeDScene):
 
 
 
+class AnalogComputing(Scene):
+    def construct(self):
+        disc_radius = 1
+
+        rad_1 = 0.6412
+        disc1 = Circle(disc_radius).set_fill(opacity=0.9).move_to(1*LEFT + 1*DOWN)
+        self.add(disc1)
+        disc1_horizonLine = Line(disc1.get_center(), end=disc1.get_center()+disc_radius*RIGHT)
+        disc1_rotateLine = Line(disc1.get_center(), end=disc1.get_center()+disc_radius*RIGHT)
+        self.add(disc1_horizonLine, disc1_rotateLine)
+        self.wait(5)
+        self.play(
+            Rotate(
+                disc1_rotateLine,
+                angle=rad_1,
+                about_point=disc1_rotateLine.start,
+                rate_func=linear
+            )
+        )
+
+        arc_1 = Arc(radius=0.5, angle=rad_1, color=WHITE).move_arc_center_to(disc1.get_center())
+        angle_1 = DecimalNumber(rad_1, num_decimal_places=4, font_size=20, color=WHITE).move_to(arc_1.get_center() + 0.4*RIGHT)
+        self.add(arc_1, angle_1)
+        self.wait(5)
+
+        rad_2 = 0.3459
+        disc2 = Circle(disc_radius).set_fill(opacity=0.9).move_to(disc1_rotateLine.get_end()).set_z_index(-1)
+        self.add(disc2)
+        disc2_horizonLine = Line(disc2.get_center(), end=disc2.get_center()+disc_radius*RIGHT)
+        disc2_rotateLine = Line(disc2.get_center(), end=disc2.get_center()+disc_radius*RIGHT)
+        self.add(disc2_horizonLine, disc2_rotateLine)
+        self.wait(1)
+        self.play(
+            Rotate(
+                disc2_rotateLine,
+                angle=rad_2,
+                about_point=disc2_rotateLine.start,
+                rate_func=linear
+            )
+        )
+        arc_2 = Arc(radius=0.5, angle=rad_2, color=WHITE).move_arc_center_to(disc2.get_center())
+        angle_2 = DecimalNumber(rad_2, num_decimal_places=4, font_size=20, color=WHITE).move_to(arc_2.get_center() + 0.4*RIGHT)
+        self.add(arc_2, angle_2)
+        self.wait(3)
+
+        rad_3 = 1.207
+        disc3 = Circle(disc_radius).set_fill(opacity=0.9).move_to(disc2_rotateLine.get_end()).set_z_index(-1)
+        self.add(disc3)
+        disc3_horizonLine = Line(disc3.get_center(), end=disc3.get_center()+disc_radius*RIGHT)
+        disc3_rotateLine = Line(disc3.get_center(), end=disc3.get_center()+disc_radius*RIGHT)
+        self.add(disc3_horizonLine, disc3_rotateLine)
+        self.wait(1)
+        self.play(
+            Rotate(
+                disc3_rotateLine,
+                angle=rad_3,
+                about_point=disc3_rotateLine.start,
+                rate_func=linear
+            )
+        )
+        arc_3 = Arc(radius=0.5, angle=rad_3, color=WHITE).move_arc_center_to(disc3.get_center())
+        angle_3 = DecimalNumber(rad_3, num_decimal_places=4, font_size=20, color=WHITE).move_to(arc_3.get_center() + 0.4*RIGHT)
+        self.add(arc_3, angle_3)
+        self.wait(3)
+
+        
+        self.wait()
 
 
 

@@ -3,6 +3,8 @@ import time
 
 from manim import *
 
+# manim -pql main.py
+
 
 class twoD_oscillator3(ThreeDScene):
 
@@ -195,16 +197,18 @@ class EnergyLandscape2(ThreeDScene):
 class Annealing2(ThreeDScene):
 
     def V0(self, x, y):
-        return 0.5 * (x**2 + y**2)
+        return 0.075 * (x**2 + y**2)
 
     def Vp(self, x, y):
         return np.sin(0.5*x) + np.sin(y) + np.sin(x) + 0.05*x**2 + 0.03*y**2
-    
-    def V(self, x, y, t):
-        return (1-t)*self.V0(x, y) + t*self.Vp(x, y)
 
-    def V_surface(self, x, y, t):
-        return (x, y, self.V(x, y, t))
+    def V_surface_wrapper(self, i):
+        t = i / self.i_max
+
+        def V(x, y):
+            return (x, y, (1-t)*self.V0(x, y) + t*self.Vp(x, y))
+
+        return V
 
 #  come back later
     def acc(self, x, y, t, delta=0.0001):
@@ -252,34 +256,30 @@ class Annealing2(ThreeDScene):
 
         x_axis = np.arange(-10, 10, 0.001)
         t_axis = np.arange(0, 50, 0.00001)
+        self.i_max = len(t_axis)-1
         initial_pos = (0, 0)
-        self.generate_pos_list(initial_pos[0], initial_pos[1], t_axis, x_axis)
+        # self.generate_pos_list(initial_pos[0], initial_pos[1], t_axis, x_axis)
         i = ValueTracker(0)
         ball_radius = 0.2
 
-        ball_pos = always_redraw(
-            lambda: Sphere(
-                self.ball_path_func(i.get_value()),
-                radius=ball_radius,
-                color=RED,
-            ).set_opacity(1)
-        )
+        # ball_pos = always_redraw(
+        #     lambda: Sphere(
+        #         self.ball_path_func(i.get_value()),
+        #         radius=ball_radius,
+        #         color=RED,
+        #     ).set_opacity(1)
+        # )
         surface = always_redraw(
             lambda: Surface(
-            self.V_surface,
-            u_range=[x_axis[0], x_axis[-1]],
-            v_range=[x_axis[0], x_axis[-1]],
-            color=BLUE
+                self.V_surface_wrapper(i.get_value()),
+                u_range=[x_axis[0], x_axis[-1]],
+                v_range=[x_axis[0], x_axis[-1]],
+                color=BLUE,
+                fill_opacity=0.5
+            )
         )
-        )
-        surface = Surface(
-            self.V_surface,
-            u_range=[x_axis[0], x_axis[-1]],
-            v_range=[x_axis[0], x_axis[-1]],
-            color=BLUE
-        )
-
-        self.add(surface, ball_pos)
+        self.add(surface)
+        # self.add(surface, ball_pos)
 
         self.wait()
 
@@ -291,7 +291,7 @@ class Annealing2(ThreeDScene):
 
         self.wait(2)
 
-        self.play(i.animate.set_value(len(t_axis)-1), rate_func=linear, run_time=5)
+        self.play(i.animate.set_value(self.i_max), rate_func=linear, run_time=5)
 
         self.stop_ambient_camera_rotation()
 
@@ -300,16 +300,20 @@ class Annealing2(ThreeDScene):
 
 
 
-class AnalogComputing(Scene):
+class AnalogComputing_bgColour(Scene):
     def construct(self):
-        disc_radius = 1
+        self.camera.background_color = "#E8E8E8"
+        disc_radius = 2
+        angle_font_size = 45
+        arc_angle_dist = 0.7 * RIGHT
 
         rad_1 = 0.6412
-        disc1 = Circle(disc_radius).set_fill(opacity=0.9).move_to(1*LEFT + 1*DOWN)
+        disc1 = Circle(disc_radius, color=DARK_BROWN).set_fill(opacity=0.9).move_to(2*LEFT + 1*DOWN)
         self.add(disc1)
-        disc1_horizonLine = Line(disc1.get_center(), end=disc1.get_center()+disc_radius*RIGHT)
-        disc1_rotateLine = Line(disc1.get_center(), end=disc1.get_center()+disc_radius*RIGHT)
+        disc1_horizonLine = Line(disc1.get_center(), end=disc1.get_center()+disc_radius*RIGHT, color=BLACK)
+        disc1_rotateLine = Line(disc1.get_center(), end=disc1.get_center()+disc_radius*RIGHT, color=BLACK)
         self.add(disc1_horizonLine, disc1_rotateLine)
+
         self.wait(5)
         self.play(
             Rotate(
@@ -320,16 +324,16 @@ class AnalogComputing(Scene):
             )
         )
 
-        arc_1 = Arc(radius=0.5, angle=rad_1, color=WHITE).move_arc_center_to(disc1.get_center())
-        angle_1 = DecimalNumber(rad_1, num_decimal_places=4, font_size=20, color=WHITE).move_to(arc_1.get_center() + 0.4*RIGHT)
+        arc_1 = Arc(radius=0.5, angle=rad_1, color=BLACK).move_arc_center_to(disc1.get_center())
+        angle_1 = DecimalNumber(rad_1, num_decimal_places=4, font_size=angle_font_size, color=WHITE).move_to(arc_1.get_center() + arc_angle_dist)
         self.add(arc_1, angle_1)
         self.wait(5)
 
         rad_2 = 0.3459
-        disc2 = Circle(disc_radius).set_fill(opacity=0.9).move_to(disc1_rotateLine.get_end()).set_z_index(-1)
+        disc2 = Circle(disc_radius, color=DARK_BROWN).set_fill(opacity=0.9).move_to(disc1_rotateLine.get_end()).set_z_index(-1)
         self.add(disc2)
-        disc2_horizonLine = Line(disc2.get_center(), end=disc2.get_center()+disc_radius*RIGHT)
-        disc2_rotateLine = Line(disc2.get_center(), end=disc2.get_center()+disc_radius*RIGHT)
+        disc2_horizonLine = Line(disc2.get_center(), end=disc2.get_center()+disc_radius*RIGHT, color=BLACK)
+        disc2_rotateLine = Line(disc2.get_center(), end=disc2.get_center()+disc_radius*RIGHT, color=BLACK)
         self.add(disc2_horizonLine, disc2_rotateLine)
         self.wait(1)
         self.play(
@@ -340,16 +344,16 @@ class AnalogComputing(Scene):
                 rate_func=linear
             )
         )
-        arc_2 = Arc(radius=0.5, angle=rad_2, color=WHITE).move_arc_center_to(disc2.get_center())
-        angle_2 = DecimalNumber(rad_2, num_decimal_places=4, font_size=20, color=WHITE).move_to(arc_2.get_center() + 0.4*RIGHT)
+        arc_2 = Arc(radius=0.5, angle=rad_2, color=BLACK).move_arc_center_to(disc2.get_center())
+        angle_2 = DecimalNumber(rad_2, num_decimal_places=4, font_size=angle_font_size, color=WHITE).move_to(arc_2.get_center() + arc_angle_dist)
         self.add(arc_2, angle_2)
         self.wait(3)
 
         rad_3 = 1.207
-        disc3 = Circle(disc_radius).set_fill(opacity=0.9).move_to(disc2_rotateLine.get_end()).set_z_index(-1)
+        disc3 = Circle(disc_radius, color=DARK_BROWN).set_fill(opacity=0.9).move_to(disc2_rotateLine.get_end()).set_z_index(-1)
         self.add(disc3)
-        disc3_horizonLine = Line(disc3.get_center(), end=disc3.get_center()+disc_radius*RIGHT)
-        disc3_rotateLine = Line(disc3.get_center(), end=disc3.get_center()+disc_radius*RIGHT)
+        disc3_horizonLine = Line(disc3.get_center(), end=disc3.get_center()+disc_radius*RIGHT, color=BLACK)
+        disc3_rotateLine = Line(disc3.get_center(), end=disc3.get_center()+disc_radius*RIGHT, color=BLACK)
         self.add(disc3_horizonLine, disc3_rotateLine)
         self.wait(1)
         self.play(
@@ -360,8 +364,8 @@ class AnalogComputing(Scene):
                 rate_func=linear
             )
         )
-        arc_3 = Arc(radius=0.5, angle=rad_3, color=WHITE).move_arc_center_to(disc3.get_center())
-        angle_3 = DecimalNumber(rad_3, num_decimal_places=4, font_size=20, color=WHITE).move_to(arc_3.get_center() + 0.4*RIGHT)
+        arc_3 = Arc(radius=0.5, angle=rad_3, color=BLACK).move_arc_center_to(disc3.get_center())
+        angle_3 = DecimalNumber(rad_3, num_decimal_places=4, font_size=angle_font_size, color=WHITE).move_to(arc_3.get_center() + arc_angle_dist)
         self.add(arc_3, angle_3)
         self.wait(3)
 
