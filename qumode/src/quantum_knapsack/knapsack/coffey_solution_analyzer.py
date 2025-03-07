@@ -1,3 +1,5 @@
+# TODO Inherit from coffey.py
+
 from dataclasses import dataclass
 from typing import List, Tuple, Sequence
 
@@ -102,7 +104,7 @@ class SolutionAnalyzer:
         valid_states: List[int] = []
         best_value: float = 0.0
 
-        for state_idx in range(1 << total_bits):  # More efficient than 2**total_bits
+        for state_idx in range(1 << total_bits):
             binary = format(state_idx, f'0{total_bits}b')
 
             # Split binary string into items and ancilla bits

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
+from copy import deepcopy
 
 import numpy as np
 from numpy.typing import NDArray
@@ -32,7 +33,7 @@ class Basis(ABC):
     @property
     def basis_states(self) -> List[NDArray[np.complex128]]:
         """Get the list of basis states."""
-        return self._basis_states
+        return deepcopy(self._basis_states)
 
     def get_basis_state(self, idx: int) -> NDArray[np.complex128]:
         """
@@ -49,12 +50,12 @@ class Basis(ABC):
         """
         if not 0 <= idx < self._dimension:
             raise IndexError(f"Basis state index {idx} out of range [0, {self._dimension - 1}]")
-        return self._basis_states[idx]
+        return deepcopy(self._basis_states[idx])
 
     @property
     def basis_matrix(self) -> NDArray[np.complex128]:
         """Get the basis matrix."""
-        return self._basis_matrix
+        return deepcopy(self._basis_matrix)
 
     @property
     def dimension(self) -> int:
@@ -79,7 +80,7 @@ class Basis(ABC):
                 if not np.isclose(inner_prod, expected, atol=tolerance):
                     print(
                         f"{'State ' + str(i) + ' is not normalized' if i == j else 'States ' + str(i) + ' and ' + str(j) + ' are not orthogonal'}: "
-                        f"expected {expected:.1f}+0j but got {inner_prod:.3f}"
+                        f"expected {expected:.1f} but got {inner_prod:.3f}"
                     )
                     return False
 
@@ -106,7 +107,12 @@ class Basis(ABC):
             True if completeness relation is satisfied, False otherwise
         """
         completeness = self.get_completeness()
-        return np.allclose(completeness, np.eye(self._dimension, dtype=np.complex128), atol=tolerance)
+        is_complete = np.allclose(completeness, np.eye(self._dimension, dtype=np.complex128), atol=tolerance)
+        if not is_complete:
+            print("Basis is not complete.")
+        else:
+            print("Basis is complete.")
+        return is_complete
 
     def __str__(self) -> str:
         """Return string representation of the basis.

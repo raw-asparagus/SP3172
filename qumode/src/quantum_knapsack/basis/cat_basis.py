@@ -19,7 +19,7 @@ class CatBasis(QumodeBasis):
         _N (int): Fock space dimension for encoding
         _alpha (complex): Complex amplitude parameter
         _factorials (List[int]): Precomputed factorials for efficiency
-        _fock_states (List[np.ndarray]): Standard basis states
+        _fock_basis (StandardBasis): Standard basis
         _coherent_states (List[np.ndarray]): Generated coherent states
     """
 
@@ -44,7 +44,7 @@ class CatBasis(QumodeBasis):
 
         # Initialize components
         self._factorials: List[int] = self._compute_factorials(n)
-        self._fock_states: List[np.ndarray] = StandardBasis(dimension).basis_states
+        self._fock_basis: StandardBasis = StandardBasis(dimension)
         self._coherent_states: List[np.ndarray] = self._generate_coherent_states(n)
 
         self._create_basis()
@@ -62,7 +62,7 @@ class CatBasis(QumodeBasis):
         coherent_state: np.ndarray = np.zeros((self._N, 1), dtype=complex)
 
         for n in range(self._N):
-            temp: np.ndarray = deepcopy(self._fock_states[n])
+            temp: np.ndarray = self._fock_basis.get_basis_state(n)
 
             # Calculate coefficient
             coeff: np.complex128 = np.exp(2j * np.pi * n * k / self._N)

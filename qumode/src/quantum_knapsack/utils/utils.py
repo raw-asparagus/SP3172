@@ -1,6 +1,5 @@
 import time
 from functools import wraps
-from numbers import Complex
 from typing import Any, Callable, Union
 
 import numpy as np
@@ -40,21 +39,13 @@ def timer_decorator(func: Callable) -> Callable:
 
 
 def _format_complex(complex_num: Union[complex, np.complex128, np.ndarray, float, int]) -> str:
-    """Format a single complex number as a string.
+    """Format a single complex number as a string for LaTeX.
 
     Args:
-        complex_num: Complex number to format. Can be:
-            - Python complex
-            - NumPy complex128
-            - NumPy ndarray containing a single complex number
-            - Real numbers (float/int which will be treated as complex with zero imaginary part)
+        complex_num: Complex number to format (can be real or complex).
 
     Returns:
-        str: Formatted string representation of the complex number.
-
-    Raises:
-        TypeError: If input is not a valid complex number type.
-        ValueError: If input is a ndarray with more than one element.
+        str: LaTeX formatted string representation of the number.
     """
     # Handle NumPy array case
     if isinstance(complex_num, np.ndarray):
@@ -62,44 +53,33 @@ def _format_complex(complex_num: Union[complex, np.complex128, np.ndarray, float
             raise ValueError("Input array must contain exactly one element")
         complex_num = complex_num.item()
 
-    # Check if input is a valid numeric type that can be treated as complex
-    if not isinstance(complex_num, (Complex, np.complex128, float, int)):
-        raise TypeError(
-            f"Input must be a complex number or real number, got {type(complex_num)}"
-        )
-
     # Convert to complex number if it's a real number
     if isinstance(complex_num, (float, int)):
-        complex_num = complex(complex_num)
+        return f"{float(complex_num):.3f}"
 
     # Extract real and imaginary parts
     real = float(complex_num.real)
     imag = float(complex_num.imag)
 
-    # Format the string representation
-    sign = " - " if imag < 0 else " + "
-    return f"{real:.{DECIMAL_PRECISION}f}{sign}{abs(imag):.{DECIMAL_PRECISION}f}i"
+    # Format for LaTeX
+    if imag == 0:
+        return f"{real:.3f}"
+    elif real == 0:
+        return f"{imag:.3f}i"
+    else:
+        sign = " - " if imag < 0 else " + "
+        return f"{real:.3f}{sign}{abs(imag):.3f}i"
 
 
-def pretty_format(matrix: NDArray[np.complex128]) -> str:
-    """Pretty print a numpy array of complex numbers.
+def pretty_format(matrix: NDArray[np.complex128], matrix_type: str = 'bmatrix') -> str:
+    """Convert a numpy array to LaTeX matrix representation.
 
     Args:
-        matrix: 2D numpy array of complex numbers.
+        matrix: 2D numpy array of numbers (real or complex).
+        matrix_type: LaTeX matrix environment type ('bmatrix', 'pmatrix', 'matrix', etc.).
 
     Returns:
-        str: Formatted string representation of the matrix.
-
-    Raises:
-        TypeError: If input is not a numpy array.
-        ValueError: If input is not a 2D array.
-
-    Example:
-        >>> arr = np.array([[1+2j, 3+4j], [5+6j, 7+8j]])
-        >>> print(pretty_format(arr))
-        ⌈   1.000 + 2.000i   3.000 + 4.000i   ⌉
-        |   5.000 + 6.000i   7.000 + 8.000i   |
-        ⌊   5.000 + 6.000i   7.000 + 8.000i   ⌋
+        str: LaTeX code for the matrix.
     """
     if not isinstance(matrix, np.ndarray):
         raise TypeError("Input must be a numpy array")
@@ -107,41 +87,20 @@ def pretty_format(matrix: NDArray[np.complex128]) -> str:
     if matrix.ndim != 2:
         raise ValueError("Input must be a 2D array")
 
-    rows, cols = matrix.shape
-    formatted_matrix = [['' for _ in range(cols)] for _ in range(rows)]
-    col_widths = [0] * cols
+    # Start the LaTeX matrix
+    latex_str = f"\\begin{{{matrix_type}}}\n"
 
-    # Format each number and find maximum width for each column
-    for i in range(rows):
-        for j in range(cols):
-            formatted_matrix[i][j] = _format_complex(matrix[i, j])
-            col_widths[j] = max(col_widths[j], len(formatted_matrix[i][j]))
+    # Format each row
+    rows = []
+    for row in matrix:
+        # Format each element in the row and join with LaTeX column separator
+        row_str = " & ".join(_format_complex(elem) for elem in row)
+        rows.append(row_str)
 
-    # Build the formatted string
-    result = []
-    for i in range(rows):
-        # Add left border
-        if i == 0:
-            row = [MATRIX_BORDERS['top_left'] + COLUMN_DELIMITER]
-        elif i == rows - 1:
-            row = [MATRIX_BORDERS['bottom_left'] + COLUMN_DELIMITER]
-        else:
-            row = [MATRIX_BORDERS['middle'] + COLUMN_DELIMITER]
+    # Join rows with LaTeX row separator
+    latex_str += " \\\\\n".join(rows)
 
-        # Add formatted numbers
-        row.extend(
-            f"{formatted_matrix[i][j]:>{col_widths[j]}}"
-            for j in range(cols)
-        )
+    # Close the matrix environment
+    latex_str += f"\n\\end{{{matrix_type}}}"
 
-        # Add right border
-        if i == 0:
-            row.append(f"{COLUMN_DELIMITER}{MATRIX_BORDERS['top_right']}")
-        elif i == rows - 1:
-            row.append(f"{COLUMN_DELIMITER}{MATRIX_BORDERS['bottom_right']}")
-        else:
-            row.append(f"{COLUMN_DELIMITER}{MATRIX_BORDERS['middle']}")
-
-        result.append(COLUMN_DELIMITER.join(row))
-
-    return "\n".join(result)
+    return r'' + latex_str

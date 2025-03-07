@@ -1,6 +1,6 @@
-from typing import List, Optional, Tuple
+from copy import deepcopy
+from typing import List, Tuple
 
-from scipy.sparse.linalg import eigsh
 import numpy as np
 from numpy.typing import NDArray
 
@@ -14,8 +14,8 @@ class SquareMatrix(Matrix):
     def __init__(self) -> None:
         """Initialize square matrix with empty eigendecomposition."""
         super().__init__()
-        self._eigenvalues: Optional[NDArray[np.float64]] = None
-        self._eigenvectors: Optional[List[NDArray[np.float64]]] = None
+        self._eigenvalues: NDArray[np.float64] = np.zeros(self.shape, dtype=np.float64)
+        self._eigenvectors: List[NDArray[np.float64]] = []
 
     def _eigen_decompose(self) -> None:
         """Perform eigendecomposition of the matrix.
@@ -50,7 +50,7 @@ class SquareMatrix(Matrix):
         Raises:
             RuntimeError: If eigendecomposition hasn't been performed
         """
-        if self._eigenvalues is None:
+        if not self._eigenvalues.any():
             raise RuntimeError("Eigendecomposition not performed")
         return self._eigenvalues.copy()
 
@@ -64,9 +64,9 @@ class SquareMatrix(Matrix):
         Raises:
             RuntimeError: If eigendecomposition hasn't been performed
         """
-        if self._eigenvectors is None:
+        if len(self._eigenvectors) == 0:
             raise RuntimeError("Eigendecomposition not performed")
-        return [v.copy() for v in self._eigenvectors]
+        return [deepcopy(ev) for ev in self._eigenvectors]
 
     @property
     def ground_state(self) -> Tuple[float, NDArray[np.float64]]:
@@ -79,7 +79,7 @@ class SquareMatrix(Matrix):
             DegenerateException: If ground state is degenerate
             RuntimeError: If eigendecomposition hasn't been performed
         """
-        if self._eigenvalues is None or self._eigenvectors is None:
+        if not self._eigenvalues.any() or not len(self._eigenvectors) != 0:
             raise RuntimeError("Eigendecomposition not performed")
 
         if len(self._eigenvalues) > 1 and np.isclose(
@@ -88,4 +88,4 @@ class SquareMatrix(Matrix):
         ):
             raise DegenerateException("Ground state is degenerate")
 
-        return float(self._eigenvalues[0]), self._eigenvectors[0].copy()
+        return float(self._eigenvalues[0]), deepcopy(self._eigenvectors[0])

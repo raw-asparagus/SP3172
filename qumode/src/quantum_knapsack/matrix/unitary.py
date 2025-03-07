@@ -1,6 +1,5 @@
-from typing import Optional
 import numpy as np
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 
 from .square_matrix import SquareMatrix
 
@@ -21,11 +20,8 @@ class Unitary(SquareMatrix):
         """Initialize unitary matrix with time evolution parameters.
 
         Args:
-            start_time (float): Initial time point
-            end_time (float): Final time point
-            func (Callable[[ArrayLike], NDArray[np.float64]]): Function that returns F(end) - F(start)
-                where integral of -i/hbar H(t)dt = F(t) + C
-            energy_scale (float): Energy scale factor in natural units
+            matrix: Matrix for unitary evolution
+            energy_scale: Energy scaling factor
 
         Raises:
             ValueError: If end_time <= start_time or energy_scale <= 0
@@ -33,11 +29,11 @@ class Unitary(SquareMatrix):
         super().__init__()
 
         # Initialize attributes
-        self._unitary_evolution: Optional[NDArray[np.complex128]] = None
+        self._matrix = matrix.real.astype(np.float64) if np.all(np.isreal(matrix)) else matrix.astype(np.complex128)
+        self._unitary_evolution: NDArray[np.complex128] = np.zeros(self.shape, dtype=np.complex128)
 
-        self._matrix = matrix
-
-        # Compute the unitary matrix
+        # Perform eigendecomposition and compute evolution
+        self._eigen_decompose()
         self._compute_unitary(energy_scale)
 
     def _compute_unitary(self, energy_scale: float) -> None:
@@ -49,8 +45,9 @@ class Unitary(SquareMatrix):
         Note:
             This method updates the _unitary_evolution attribute.
         """
-        self._eigen_decompose()
-        p: NDArray[np.complex128] = np.hstack(self.eigenvectors)
+        # Get eigenvector matrix
+        p: NDArray[np.float64] = np.hstack(self.eigenvectors)
+
         exp_d: NDArray[np.complex128] = np.diag(
             np.exp(-1j * self.eigenvalues / energy_scale)
         )
@@ -69,8 +66,8 @@ class Unitary(SquareMatrix):
             RuntimeError: If unitary evolution operator hasn't been computed
             ValueError: If state dimensions don't match the operator dimensions
         """
-        if self._unitary_evolution is None:
-            raise RuntimeError("Unitary evolution has not been computed")
+        if not self._unitary_evolution.any():
+            raise RuntimeError("Unitary evolution not computed")
 
         if state.shape[0] != self._unitary_evolution.shape[0]:
             raise ValueError(

@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Optional
+from copy import deepcopy
 
 import numpy as np
 from numpy.typing import NDArray
@@ -18,8 +18,8 @@ class QumodeBasis(Basis, ABC):
     def __init__(self) -> None:
         """Initialize the quantum mode basis with ladder operators."""
         super().__init__()
-        self._creation_operator: Optional[NDArray[np.complex128]] = None
-        self._annihilation_operator: Optional[NDArray[np.complex128]] = None
+        self._creation_operator: NDArray[np.complex128] = np.zeros((self.dimension, self.dimension), dtype=np.complex128)
+        self._annihilation_operator: NDArray[np.complex128] = np.zeros((self.dimension, self.dimension), dtype=np.complex128)
 
     def _create_ladder_operators(self) -> None:
         """
@@ -44,13 +44,13 @@ class QumodeBasis(Basis, ABC):
     @property
     def creation_operator(self) -> NDArray[np.complex128]:
         """Get the creation operator matrix."""
-        if self._creation_operator is None:
+        if not self._creation_operator.any():
             raise RuntimeError("Ladder operators have not been initialized.")
-        return self._creation_operator
+        return deepcopy(self._creation_operator)
 
     @property
     def annihilation_operator(self) -> NDArray[np.complex128]:
         """Get the annihilation operator matrix."""
-        if self._annihilation_operator is None:
+        if not self._annihilation_operator.any():
             raise RuntimeError("Ladder operators have not been initialized.")
-        return self._annihilation_operator
+        return deepcopy(self._annihilation_operator)

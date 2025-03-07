@@ -1,5 +1,3 @@
-from typing import Union
-
 import numpy as np
 from numpy.typing import NDArray
 
@@ -29,22 +27,3 @@ class ColumnMatrix(Matrix):
         if np.isclose(norm, 0):
             raise ValueError("Cannot normalize zero vector")
         return state / norm
-
-    @classmethod
-    def from_array(cls, data: Union[NDArray[np.complex128], NDArray[np.float64]]) -> 'ColumnMatrix':
-        """Create a ColumnMatrix from numpy array.
-
-        Args:
-            data: Input array data
-
-        Returns:
-            ColumnMatrix: New column matrix instance
-
-        Raises:
-            ValueError: If input is not a column vector
-        """
-        instance = cls()
-        if data.ndim != 2 or data.shape[1] != 1:
-            raise ValueError("Data must be a column vector (n×1 matrix)")
-        instance._matrix = np.asarray(data, dtype=np.complex128)
-        return instance

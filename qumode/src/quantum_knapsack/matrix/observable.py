@@ -1,4 +1,4 @@
-from typing import Optional
+from copy import deepcopy
 
 import numpy as np
 from numpy.typing import NDArray
@@ -39,7 +39,7 @@ class Observable(SquareMatrix):
             raise ValueError("Time step must be positive")
 
         self._matrix = matrix.real.astype(np.float64) if np.all(np.isreal(matrix)) else matrix.astype(np.complex128)
-        self._unitary_evolution: Optional[NDArray[np.complex128]] = None
+        self._unitary_evolution: NDArray[np.complex128] = np.zeros(self.shape, dtype=np.complex128)
 
         # Perform eigendecomposition and compute evolution
         self._eigen_decompose()
@@ -53,10 +53,10 @@ class Observable(SquareMatrix):
             dt: Time step
         """
         # Get eigenvector matrix
-        p = np.hstack(self.eigenvectors)
+        p: NDArray[np.float64] = np.hstack(self.eigenvectors)
 
         # Compute diagonal evolution matrix
-        exp_d = np.diag(
+        exp_d: NDArray[np.complex128] = np.diag(
             np.exp(-1j * self.eigenvalues / energy_scale * dt)
         )
 
@@ -70,9 +70,9 @@ class Observable(SquareMatrix):
         Returns:
             NDArray[np.complex128]: Evolution operator matrix
         """
-        if self._unitary_evolution is None:
+        if not self._unitary_evolution.any():
             raise RuntimeError("Unitary evolution not computed")
-        return self._unitary_evolution.copy()
+        return deepcopy(self._unitary_evolution)
 
     def measure(self, state: NDArray[np.complex128]) -> float:
         """Measure the observable on the given state.
@@ -107,9 +107,12 @@ class Observable(SquareMatrix):
         Raises:
             ValueError: If state dimensions don't match
         """
-        if self._unitary_evolution is None:
+        if not self._unitary_evolution.any():
             raise RuntimeError("Unitary evolution not computed")
         if state.shape[0] != self._unitary_evolution.shape[0]:
-            raise ValueError("State vector dimension mismatch")
+            raise ValueError(
+                f"State vector dimension {state.shape[0]} does not match "
+                f"operator dimension {self._unitary_evolution.shape[0]}"
+            )
 
         return self._unitary_evolution @ state

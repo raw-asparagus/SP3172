@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from typing import Optional
 
 import numpy as np
@@ -64,7 +65,7 @@ class Mapping(ABC):
         """
         if self._problem_hamiltonian.size == 0:
             raise RuntimeError("Problem hamiltonian not initialized")
-        return self._problem_hamiltonian.copy()
+        return deepcopy(self._problem_hamiltonian)
 
     @property
     def penalty_scale(self) -> float:

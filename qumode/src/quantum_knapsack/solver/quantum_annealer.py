@@ -1,5 +1,9 @@
+import itertools
+import multiprocessing
+from concurrent.futures.process import ProcessPoolExecutor
+from copy import deepcopy
 from dataclasses import dataclass
-from typing import List, Sequence, Optional
+from typing import List, Sequence, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -130,25 +134,6 @@ class QuantumAnnealer(Solver):
         # Set initial state to ground state
         self._states[0] = self._observables[0].ground_state[1]
 
-    def initialize_alt(self, params: AnnealingParameters) -> None:
-        """Initialize alternative annealing process.
-
-        Args:
-            params: Annealing parameters
-
-        Raises:
-            ValueError: If parameters are invalid
-        """
-        params.validate()
-        self._params = params
-
-        # Scale mixing hamiltonian
-        self._mixing_hamiltonian *= params.initial_h_strength
-
-        # Setup time evolution
-        self._setup_evolution(2)
-        self._initialize_states()
-
     def solve(self) -> None:
         """Execute quantum annealing evolution.
 
@@ -177,7 +162,8 @@ class QuantumAnnealer(Solver):
         end: float = 1.0 * self._params.time_scale
 
         fn = lambda t: ((t - t ** 2 / 2 / end) * self._mixing_hamiltonian + t ** 2 / 2 / end * self._mapping.problem_hamiltonian) / end
-        unitary_evolution = Unitary(fn(end) - fn(0.0), self._params.energy_scale)
+        analytical_sum = fn(end) - fn(0.0)
+        unitary_evolution = Unitary(analytical_sum, self._params.energy_scale)
         self._states[-1] = unitary_evolution.evolve(self._states[0])
 
     def solve_alt_numerical(self) -> None:
@@ -190,13 +176,14 @@ class QuantumAnnealer(Solver):
             raise RuntimeError("Annealer not initialized")
 
         # Evolve system through one unitary evolution
-        fn = lambda t: self._get_hamiltonian(t)
         end: float = 1.0 * self._params.time_scale
-        matrix = np.array([
-            [quad(lambda t: fn(t)[i, j], 0.0, end)[0] for j in range(fn(0.0).shape[1])]
-            for i in range(fn(1.0).shape[0])
+
+        fn = lambda t: self._get_hamiltonian(t)
+        quad_sum = np.array([
+            [quad(lambda t: fn(t)[i, j], 0.0, end)[0] for j in range(self._basis.dimension)]
+            for i in range(self._basis.dimension)
         ])
-        unitary_evolution = Unitary(matrix, self._params.energy_scale)
+        unitary_evolution = Unitary(quad_sum, self._params.energy_scale)
         self._states[-1] = unitary_evolution.evolve(self._states[0])
 
     def get_result(self, num_points: int) -> Result:
@@ -242,13 +229,13 @@ class QuantumAnnealer(Solver):
         )
 
     @property
-    def observables(self) -> Sequence[Observable]:
+    def observables(self) -> List[Observable]:
         """Get system observables.
 
         Returns:
             Sequence[Observable]: Observable operators
         """
-        return tuple(self._observables)
+        return deepcopy(self._observables)
 
     @property
     def evolution_times(self) -> NDArray[np.float64]:
@@ -260,13 +247,13 @@ class QuantumAnnealer(Solver):
         return self._times.copy()
 
     @property
-    def quantum_states(self) -> Sequence[NDArray[np.complex128]]:
+    def quantum_states(self) -> List[NDArray[np.complex128]]:
         """Get quantum states at each time point.
 
         Returns:
             Sequence[NDArray[np.complex128]]: Quantum state vectors
         """
-        return tuple(state.copy() for state in self._states)
+        return [deepcopy(state) for state in self._states]
 
     @property
     def mixing_hamiltonian(self) -> NDArray[np.float64]:
@@ -275,7 +262,7 @@ class QuantumAnnealer(Solver):
         Returns:
             NDArray[np.float64]: Mixing hamiltonian matrix
         """
-        return self._mixing_hamiltonian.copy()
+        return deepcopy(self._mixing_hamiltonian)
 
     @property
     def initial_state(self) -> NDArray[np.complex128]:
@@ -289,4 +276,28 @@ class QuantumAnnealer(Solver):
         """
         if not self._states:
             raise RuntimeError("States not initialized")
-        return self._states[0].copy()
+        return deepcopy(self._states[0])
+
+def create_observable(
+        t: np.float64,
+        get_hamiltonian: callable,
+        energy_scale: float,
+        dt: np.float64
+) -> Observable:
+    """
+    Create an Observable instance for time t.
+
+    Parameters:
+        t: The time value.
+        get_hamiltonian: A callable to get the hamiltonian at time t.
+        energy_scale: The energy scale parameter.
+        dt: The time differential.
+
+    Returns:
+        Observable: An Observable instance.
+    """
+    return Observable(
+        get_hamiltonian(t),
+        energy_scale,
+        dt
+    )
