@@ -25,3 +25,4 @@ env/
 # Ignore OS generated files
 .DS_Store
 Thumbs.db
+/SP3172_manim/media
