@@ -242,7 +242,7 @@ class Result:
 
         # Filter solutions by probability
         return {
-            str(bin(idx)[2:]): f"{prob:.3f}" for idx, prob in enumerate(final_probs)
+            str(bin(idx)): f"{prob:.3f}" for idx, prob in enumerate(final_probs)
             if idx in valid_solutions and prob >= probability_threshold
         }
 

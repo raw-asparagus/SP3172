@@ -155,7 +155,7 @@ class SolutionAnalyzer:
         solutions: List[Solution] = []
 
         for state in self._correct_states:
-            binary = format(state, f'0{self._n_items}b')
+            binary = format(state, f'0{self._n_items + self._n_ancilla}b')
             items = [int(b) for b in binary[:self._n_items]]
             value, weight = self._evaluate_state(items)
             solutions.append(Solution(binary=binary, items=items, value=value, weight=weight))

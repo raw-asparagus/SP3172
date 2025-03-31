@@ -4,7 +4,7 @@ __version__ = "0.1.0"
 from .basis import Basis, QumodeBasis, StandardBasis, CatBasis
 from .knapsack import Knapsack, SolutionAnalyzer
 from .mapping import Mapping, Coffey
-from .matrix import Matrix, ColumnMatrix, SquareMatrix, Observable, Unitary, MatrixError, ObservableException, DegenerateException
+from .matrix import Matrix, ColumnMatrix, SquareMatrix, Observable, MatrixError, ObservableException, DegenerateException
 from .solver import Solver, AnnealingParameters, QuantumAnnealer
 from .solution import Result
 from .storage import Storage
@@ -23,7 +23,6 @@ __all__ = [
     "ColumnMatrix",
     "SquareMatrix",
     "Observable",
-    "Unitary",
     "MatrixError",
     "ObservableException",
     "DegenerateException",

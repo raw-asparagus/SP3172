@@ -3,6 +3,8 @@ from copy import deepcopy
 import numpy as np
 from numpy.typing import NDArray
 
+# from scipy.linalg import expm
+
 from .exceptions import ObservableException
 from .square_matrix import SquareMatrix
 
@@ -57,11 +59,12 @@ class Observable(SquareMatrix):
 
         # Compute diagonal evolution matrix
         exp_d: NDArray[np.complex128] = np.diag(
-            np.exp(-1j * self.eigenvalues / energy_scale * dt)
+            np.exp(-1j * self.eigenvalues * energy_scale * dt)
         )
 
         # Calculate evolution operator
         self._unitary_evolution = p @ exp_d @ p.conj().T
+
 
     @property
     def unitary_evolution(self) -> NDArray[np.complex128]:
@@ -91,6 +94,7 @@ class Observable(SquareMatrix):
 
         result = (state.conj().T @ self._matrix @ state)[0, 0]
         if not np.isclose(result.imag, 0):
+            print(result)
             raise ObservableException("Measurement resulted in complex value")
 
         return float(result.real)

@@ -13,7 +13,6 @@ from src.quantum_knapsack.mapping import Mapping
 from src.quantum_knapsack.matrix import Observable
 from src.quantum_knapsack.solution import Result
 from .solver import Solver
-from src.quantum_knapsack.matrix import Unitary
 from scipy.integrate import quad
 
 
@@ -149,43 +148,6 @@ class QuantumAnnealer(Solver):
                 self._states[i]
             )
 
-    def solve_alt_analytical(self) -> None:
-        """Execute alternative quantum annealing evolution.
-
-        Raises:
-            RuntimeError: If solver is not initialized
-        """
-        if not self._params:
-            raise RuntimeError("Annealer not initialized")
-
-        # Evolve system through one unitary evolution assuming H(t) = (1 - t)H0 + tHp
-        end: float = 1.0 * self._params.time_scale
-
-        fn = lambda t: ((t - t ** 2 / 2 / end) * self._mixing_hamiltonian + t ** 2 / 2 / end * self._mapping.problem_hamiltonian) / end
-        analytical_sum = fn(end) - fn(0.0)
-        unitary_evolution = Unitary(analytical_sum, self._params.energy_scale)
-        self._states[-1] = unitary_evolution.evolve(self._states[0])
-
-    def solve_alt_numerical(self) -> None:
-        """Execute alternative quantum annealing evolution.
-
-        Raises:
-            RuntimeError: If solver is not initialized
-        """
-        if not self._params:
-            raise RuntimeError("Annealer not initialized")
-
-        # Evolve system through one unitary evolution
-        end: float = 1.0 * self._params.time_scale
-
-        fn = lambda t: self._get_hamiltonian(t)
-        quad_sum = np.array([
-            [quad(lambda t: fn(t)[i, j], 0.0, end)[0] for j in range(self._basis.dimension)]
-            for i in range(self._basis.dimension)
-        ])
-        unitary_evolution = Unitary(quad_sum, self._params.energy_scale)
-        self._states[-1] = unitary_evolution.evolve(self._states[0])
-
     def get_result(self, num_points: int) -> Result:
         """Get annealing results.
 
@@ -277,27 +239,3 @@ class QuantumAnnealer(Solver):
         if not self._states:
             raise RuntimeError("States not initialized")
         return deepcopy(self._states[0])
-
-def create_observable(
-        t: np.float64,
-        get_hamiltonian: callable,
-        energy_scale: float,
-        dt: np.float64
-) -> Observable:
-    """
-    Create an Observable instance for time t.
-
-    Parameters:
-        t: The time value.
-        get_hamiltonian: A callable to get the hamiltonian at time t.
-        energy_scale: The energy scale parameter.
-        dt: The time differential.
-
-    Returns:
-        Observable: An Observable instance.
-    """
-    return Observable(
-        get_hamiltonian(t),
-        energy_scale,
-        dt
-    )
