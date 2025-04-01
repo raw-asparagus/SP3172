@@ -43,13 +43,13 @@ def extract_numbers(fn):
     return [(float(re.search(pattern, file).group(1)), float(re.search(pattern, file).group(2))) for file in filenames if re.search(pattern, file)]
 
 def main():
-    for step in map(lambda x: 2 ** x, range(1, 7)):
+    for step in map(lambda x: 2 ** x, range(6, 7)):
         folder_data = extract_numbers(file_pattern_2)
         for alpha in np.logspace(-1, 6, 8 * step - step + 1)[::-1]:
             for beta in np.logspace(-3, 4, 8 * step - step + 1):
                 if np.any([np.round(computed_alpha / alpha, 3) == 1.0 and np.round(computed_beta / beta, 3) == 1.0 for
                            computed_alpha, computed_beta in folder_data]):
-                    # print(f"Skipping alpha = {alpha} and beta = {beta}")
+                    print(f"Skipping alpha = {alpha} and beta = {beta}")
                     continue
                 else:
                     print(f"Generating probability for alpha = {alpha} and beta = {beta}")
